@@ -1,0 +1,66 @@
+DECLARE @column_updates AS NVARCHAR(MAX) = ''
+
+SELECT @column_updates = @column_updates + 
+    'UNION ALL ' + 
+    'SELECT ''' + COLUMN_NAME + ''' AS column_name, ' + 
+    'today_data.primary_key, ' + 
+    'yesterday_data.' + COLUMN_NAME + ' AS previous_value, ' + 
+    'today_data.' + COLUMN_NAME + ' AS current_value ' + 
+    'FROM your_table AS today_data ' + 
+    'JOIN your_table AS yesterday_data ' + 
+    'ON today_data.primary_key = yesterday_data.primary_key ' + 
+    'WHERE today_data.' + COLUMN_NAME + ' <> yesterday_data.' + COLUMN_NAME + ' ' +
+    'AND CAST(today_data.date_column AS DATE) = CAST(GETDATE() AS DATE) ' +
+    'AND CAST(yesterday_data.date_column AS DATE) = CAST(GETDATE()-1 AS DATE) '
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'your_table' AND COLUMN_NAME <> 'primary_key' AND COLUMN_NAME <> 'date_column'
+
+SET @column_updates = SUBSTRING(@column_updates, 10, LEN(@column_updates))
+
+EXEC (@column_updates)
+
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+WITH today AS (
+    SELECT *
+    FROM your_table
+    WHERE CAST(date_column AS DATE) = CAST(GETDATE() AS DATE)
+),
+yesterday AS (
+    SELECT *
+    FROM your_table
+    WHERE CAST(date_column AS DATE) = CAST(GETDATE()-1 AS DATE)
+)
+SELECT column_name, primary_key, previous_value, current_value
+FROM (
+    SELECT 
+        column_name, primary_key, previous_value, current_value
+    FROM (
+        SELECT 
+            'column'+CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS VARCHAR) AS column_name,
+            today.primary_key,
+            yesterday.primary_key AS yesterday_primary_key,
+            today.value AS current_value,
+            yesterday.value AS previous_value
+        FROM today
+        JOIN yesterday
+            ON today.primary_key = yesterday.primary_key
+        UNPIVOT (
+            value FOR column_values IN (today.column1, today.column2, today.column3) 
+        ) AS today_unpivoted
+        UNPIVOT (
+            value FOR column_values IN (yesterday.column1, yesterday.column2, yesterday.column3) 
+        ) AS yesterday_unpivoted
+        WHERE 
+            today_unpivoted.column_values = yesterday_unpivoted.column_values 
+            AND today_unpivoted.value <> yesterday_unpivoted.value
+    ) AS updates_unpivoted
+    PIVOT (
+        MAX(previous_value) FOR column_name IN (column1, column2, column3)
+    ) AS previous_pivot
+    PIVOT (
+        MAX(current_value) FOR column_name IN (column1, column2, column3)
+    ) AS current_pivot
+) AS updates_pivoted
