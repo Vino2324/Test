@@ -1,3 +1,50 @@
+WITH today AS (
+    SELECT *
+    FROM your_table
+    WHERE CAST(asofdate AS DATE) = CAST(GETDATE() AS DATE)
+),
+yesterday AS (
+    SELECT *
+    FROM your_table
+    WHERE CAST(asofdate AS DATE) = CAST(GETDATE()-1 AS DATE)
+)
+SELECT 
+    updates.column_name,
+    updates.asofdate,
+    updates.previous_value,
+    updates.current_value
+FROM (
+    SELECT 
+        today_unpivoted.column_name,
+        today.asofdate,
+        CAST(yesterday_unpivoted.[value] AS nvarchar(100)) AS previous_value,
+        CAST(today_unpivoted.[value] AS nvarchar(100)) AS current_value
+    FROM today
+    JOIN yesterday
+        ON today.dealgroupnum = yesterday.dealgroupnum
+        AND today.facilityid = yesterday.facilityid
+        AND today.asofdate = yesterday.asofdate
+    UNPIVOT (
+        [value] FOR today_unpivoted.column_name IN (dealgroupnum, facilityid, asofdate, bloombergid)
+    ) AS today_unpivoted
+    UNPIVOT (
+        [value] FOR yesterday_unpivoted.column_name IN (dealgroupnum, facilityid, asofdate)
+    ) AS yesterday_unpivoted
+    WHERE 
+        today_unpivoted.column_name = yesterday_unpivoted.column_name 
+        AND today_unpivoted.[value] <> yesterday_unpivoted.[value]
+) AS updates
+PIVOT (
+    MAX(previous_value) FOR column_name IN ([dealgroupnum], [facilityid], [asofdate], [bloombergid])
+) AS previous_pivot
+PIVOT (
+    MAX(current_value) FOR column_name IN ([dealgroupnum], [facilityid], [asofdate], [bloombergid])
+) AS current_pivot
+
+
+
+--------------------------
+
 DECLARE @datetime datetime = '2023-03-07 14:30:00.000'
 DECLARE @smalldatetime smalldatetime
 
