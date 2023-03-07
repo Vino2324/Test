@@ -1,0 +1,30 @@
+DECLARE @id INT = 1; -- specify the id of the row to check for changes
+
+WITH cte_changes AS
+(
+  SELECT 
+    CASE WHEN i.column1 <> u.column1 THEN 'column1' ELSE NULL END AS column_changed,
+    CASE WHEN i.column2 <> u.column2 THEN 'column2' ELSE NULL END AS column_changed,
+    CASE WHEN i.column3 <> u.column3 THEN 'column3' ELSE NULL END AS column_changed,
+    i.column1 AS column1_old,
+    i.column2 AS column2_old,
+    i.column3 AS column3_old,
+    u.column1 AS column1_new,
+    u.column2 AS column2_new,
+    u.column3 AS column3_new
+  FROM my_table i
+  INNER JOIN my_table_history h ON i.id = h.id
+  INNER JOIN my_table u ON h.id = u.id AND h.change_date = u.change_date
+  WHERE i.id = @id AND h.change_date = (SELECT MAX(change_date) FROM my_table_history WHERE id = @id)
+)
+SELECT 
+  column_changed,
+  CASE WHEN column_changed = 'column1' THEN column1_old ELSE NULL END AS column1_old,
+  CASE WHEN column_changed = 'column1' THEN column1_new ELSE NULL END AS column1_new,
+  CASE WHEN column_changed = 'column2' THEN column2_old ELSE NULL END AS column2_old,
+  CASE WHEN column_changed = 'column2' THEN column2_new ELSE NULL END AS column2_new,
+  CASE WHEN column_changed = 'column3' THEN column3_old ELSE NULL END AS column3_old,
+  CASE WHEN column_changed = 'column3' THEN column3_new ELSE NULL END AS column3_new
+FROM cte_changes
+UNPIVOT (value FOR column_changed IN (column1, column2, column3)) AS unpvt
+WHERE value IS NOT NULL;
