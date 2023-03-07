@@ -3,6 +3,44 @@ DECLARE @id INT = 1; -- specify the id of the row to check for changes
 WITH cte_changes AS
 (
   SELECT 
+    i.*,
+    h.change_date
+  FROM my_table i
+  INNER JOIN my_table_history h ON i.id = h.id
+  WHERE i.id = @id AND h.change_date = (SELECT MAX(change_date) FROM my_table_history WHERE id = @id)
+),
+cte_unpivoted AS
+(
+  SELECT 
+    old_column,
+    new_column,
+    column_name
+  FROM cte_changes
+  UNPIVOT
+  (
+    old_value FOR old_column IN (column1, column2, column3)
+  ) AS unpvt_old
+  UNPIVOT
+  (
+    new_value FOR new_column IN (column1, column2, column3)
+  ) AS unpvt_new
+  WHERE unpvt_old.column_name = unpvt_new.column_name
+    AND unpvt_old.old_column = unpvt_new.new_column
+)
+SELECT 
+  column_name,
+  old_value,
+  new_value
+FROM cte_unpivoted;
+
+----------------------------
+
+
+DECLARE @id INT = 1; -- specify the id of the row to check for changes
+
+WITH cte_changes AS
+(
+  SELECT 
     CASE WHEN i.column1 <> u.column1 THEN 'column1' ELSE NULL END AS column_changed1,
     i.column1 AS old_column1,
     u.column1 AS new_column1,
