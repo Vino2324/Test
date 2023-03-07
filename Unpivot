@@ -1,4 +1,37 @@
 SELECT 
+  row_id,
+  column_changed,
+  old_value,
+  new_value
+FROM
+(
+  SELECT 
+    row_id,
+    column_name + '_' + change_type AS column_changed,
+    value
+  FROM my_table
+  UNPIVOT
+  (
+    value FOR change_type IN (old, new)
+  ) AS unpvt
+) AS unpvt_changed
+UNPIVOT
+(
+  value FOR change_type IN (value, column_changed)
+) AS unpvt_values
+PIVOT
+(
+  MAX(value) FOR column_changed IN (
+    column1_old, column1_new, 
+    column2_old, column2_new, 
+    column3_old, column3_new
+  )
+) AS pvt
+
+
+-------------------------------
+
+SELECT 
   column_name,
   old_value,
   new_value
