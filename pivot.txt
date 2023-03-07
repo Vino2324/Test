@@ -64,3 +64,53 @@ FROM (
         MAX(current_value) FOR column_name IN (column1, column2, column3)
     ) AS current_pivot
 ) AS updates_pivoted
+
+
+
+--------------------------------------------------
+
+
+
+WITH today AS (
+    SELECT *
+    FROM your_table
+    WHERE CAST(asofdate AS DATE) = CAST(GETDATE() AS DATE)
+),
+yesterday AS (
+    SELECT *
+    FROM your_table
+    WHERE CAST(asofdate AS DATE) = CAST(GETDATE()-1 AS DATE)
+)
+SELECT column_name, dealgroupnum, facilityid, asofdate, previous_value, current_value
+FROM (
+    SELECT 
+        column_name, 
+        today.dealgroupnum, 
+        today.facilityid, 
+        today.asofdate, 
+        yesterday.dealgroupnum AS yesterday_dealgroupnum,
+        yesterday.facilityid AS yesterday_facilityid,
+        yesterday.asofdate AS yesterday_asofdate,
+        today.value AS current_value,
+        yesterday.value AS previous_value
+    FROM today
+    JOIN yesterday
+        ON today.dealgroupnum = yesterday.dealgroupnum
+        AND today.facilityid = yesterday.facilityid
+        AND today.asofdate = yesterday.asofdate
+    UNPIVOT (
+        value FOR column_values IN (today.dealgroupnum, today.facilityid, today.asofdate) 
+    ) AS today_unpivoted
+    UNPIVOT (
+        value FOR column_values IN (yesterday.dealgroupnum, yesterday.facilityid, yesterday.asofdate) 
+    ) AS yesterday_unpivoted
+    WHERE 
+        today_unpivoted.column_values = yesterday_unpivoted.column_values 
+        AND today_unpivoted.value <> yesterday_unpivoted.value
+) AS updates_unpivoted
+PIVOT (
+    MAX(previous_value) FOR column_name IN (dealgroupnum, facilityid, asofdate)
+) AS previous_pivot
+PIVOT (
+    MAX(current_value) FOR column_name IN (dealgroupnum, facilityid, asofdate)
+) AS current_pivot
