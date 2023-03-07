@@ -1,4 +1,53 @@
 DECLARE @id INT = 1; -- specify the id of the row to check for changes
+DECLARE @change_date DATE = '2023-03-07'; -- specify the date of the change to check
+
+WITH cte_changes AS
+(
+  SELECT 
+    i.*, 
+    CAST(NULL AS VARCHAR(255)) AS old_value, 
+    CAST(NULL AS VARCHAR(255)) AS new_value
+  FROM my_table i
+  WHERE i.id = @id AND i.change_date = @change_date
+),
+cte_unpivoted AS
+(
+  SELECT 
+    old_column,
+    new_column,
+    column_name
+  FROM cte_changes
+  UNPIVOT
+  (
+    old_value FOR old_column IN (name, age, city)
+  ) AS unpvt_old
+  INNER JOIN 
+  (
+    SELECT 
+      new_value, 
+      column_name 
+    FROM cte_changes
+    UNPIVOT
+    (
+      new_value FOR new_column IN (name, age, city)
+    ) AS unpvt_new
+  ) AS unpvt_new
+  ON unpvt_old.column_name = unpvt_new.column_name AND unpvt_old.old_column <> unpvt_new.new_value
+)
+SELECT 
+  column_name,
+  old_value,
+  new_value
+FROM cte_unpivoted
+ORDER BY column_name;
+
+
+
+
+-------------------------
+
+
+DECLARE @id INT = 1; -- specify the id of the row to check for changes
 
 WITH cte_changes AS
 (
