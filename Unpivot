@@ -3,6 +3,54 @@ DECLARE @id INT = 1; -- specify the id of the row to check for changes
 WITH cte_changes AS
 (
   SELECT 
+    CASE WHEN i.column1 <> u.column1 THEN 'column1' ELSE NULL END AS column_changed1,
+    i.column1 AS old_column1,
+    u.column1 AS new_column1,
+    CASE WHEN i.column2 <> u.column2 THEN 'column2' ELSE NULL END AS column_changed2,
+    i.column2 AS old_column2,
+    u.column2 AS new_column2,
+    CASE WHEN i.column3 <> u.column3 THEN 'column3' ELSE NULL END AS column_changed3,
+    i.column3 AS old_column3,
+    u.column3 AS new_column3
+  FROM my_table i
+  INNER JOIN my_table_history h ON i.id = h.id
+  INNER JOIN my_table u ON h.id = u.id AND h.change_date = u.change_date
+  WHERE i.id = @id AND h.change_date = (SELECT MAX(change_date) FROM my_table_history WHERE id = @id)
+)
+SELECT 
+  column_changed,
+  old_value,
+  new_value
+FROM (
+  SELECT 
+    column_changed1,
+    column_changed2,
+    column_changed3,
+    old_column1,
+    old_column2,
+    old_column3,
+    new_column1,
+    new_column2,
+    new_column3
+  FROM cte_changes
+) AS t
+UNPIVOT (
+  old_value FOR old_column IN (old_column1, old_column2, old_column3)
+) AS unpvt_old
+UNPIVOT (
+  new_value FOR new_column IN (new_column1, new_column2, new_column3)
+) AS unpvt_new
+WHERE unpvt_old.old_column = unpvt_new.new_column
+  AND unpvt_old.old_value <> unpvt_new.new_value;
+
+------------------------------------------------
+
+
+DECLARE @id INT = 1; -- specify the id of the row to check for changes
+
+WITH cte_changes AS
+(
+  SELECT 
     CASE WHEN i.column1 <> u.column1 THEN 'column1' ELSE NULL END AS column_changed,
     CASE WHEN i.column2 <> u.column2 THEN 'column2' ELSE NULL END AS column_changed,
     CASE WHEN i.column3 <> u.column3 THEN 'column3' ELSE NULL END AS column_changed,
