@@ -1,3 +1,29 @@
+SELECT 
+  column_name,
+  old_value,
+  new_value
+FROM my_table
+UNPIVOT
+(
+  old_value FOR column_name IN (column1_old, column2_old, column3_old)
+) AS unpvt_old
+INNER JOIN 
+(
+  SELECT 
+    new_value,
+    column_name 
+  FROM my_table
+  UNPIVOT
+  (
+    new_value FOR column_name IN (column1_new, column2_new, column3_new)
+  ) AS unpvt_new
+) AS unpvt_new
+ON unpvt_old.column_name = unpvt_new.column_name AND unpvt_old.old_value <> unpvt_new.new_value;
+
+
+
+------------------------
+
 DECLARE @id INT = 1; -- specify the id of the row to check for changes
 DECLARE @change_date DATE = '2023-03-07'; -- specify the date of the change to check
 
