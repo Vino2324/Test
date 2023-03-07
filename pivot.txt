@@ -1,3 +1,11 @@
+DECLARE @datetime datetime = '2023-03-07 14:30:00.000'
+DECLARE @smalldatetime smalldatetime
+
+SET @smalldatetime = CONVERT(smalldatetime, CONVERT(varchar, @datetime, 20))
+
+SELECT @smalldatetime
+
+
 DECLARE @column_updates AS NVARCHAR(MAX) = ''
 
 SELECT @column_updates = @column_updates + 
