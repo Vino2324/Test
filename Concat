@@ -3,6 +3,38 @@ DECLARE @column_name VARCHAR(255)
 DECLARE @column_list NVARCHAR(MAX) = ''
 
 -- Build the column list for the SELECT statement
+SELECT @column_list = CONCAT(@column_list, ', t1.', QUOTENAME(c.name), ' AS old_', QUOTENAME(c.name), ', t2.', QUOTENAME(c.name), ' AS new_', QUOTENAME(c.name))
+FROM sys.columns c
+WHERE c.object_id = OBJECT_ID('table1') AND c.name <> 'id'
+
+-- Build the comparison query dynamically
+SELECT @sql = CONCAT(@sql, '
+SELECT id, column_name, value
+FROM (
+  SELECT t1.id, c.name AS column_name,', REPLACE(@column_list, 't1.', 't.old_'), ', NULL AS new_value
+  FROM table1 t1
+  UNION ALL
+  SELECT t2.id, c.name AS column_name, NULL AS old_value,', REPLACE(@column_list, 't2.', 't.new_'), '
+  FROM table2 t2
+) AS t
+UNPIVOT (
+  value FOR column_type IN (', STRING_AGG(QUOTENAME(c.name), ',') WITHIN GROUP (ORDER BY c.name), ')
+) u
+WHERE old_value <> new_value OR (old_value IS NULL AND new_value IS NOT NULL) OR (old_value IS NOT NULL AND new_value IS NULL)
+')
+
+-- Execute the comparison query
+EXEC (@sql)
+
+
+------------------------------------------------------------------------------------------------------
+
+
+DECLARE @sql NVARCHAR(MAX) = ''
+DECLARE @column_name VARCHAR(255)
+DECLARE @column_list NVARCHAR(MAX) = ''
+
+-- Build the column list for the SELECT statement
 SELECT @column_list = CONCAT(@column_list, ',', c.name)
 FROM sys.columns c
 WHERE c.object_id = OBJECT_ID('table1') AND c.name <> 'id'
