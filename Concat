@@ -1,0 +1,23 @@
+DECLARE @sql NVARCHAR(MAX) = ''
+DECLARE @column_name VARCHAR(255)
+DECLARE @column_list NVARCHAR(MAX) = ''
+
+-- Build the column list for the SELECT statement
+SELECT @column_list = CONCAT(@column_list, ',', c.name)
+FROM sys.columns c
+WHERE c.object_id = OBJECT_ID('table1') AND c.name <> 'id'
+
+-- Build the comparison query dynamically
+SELECT @sql = CONCAT(@sql, '
+SELECT t1.id, c.name AS column_name, t1.', c.name, ' AS old_value, t2.', c.name, ' AS new_value
+FROM table1 t1
+INNER JOIN table2 t2 ON t1.id = t2.id AND t1.', c.name, ' <> t2.', c.name
+UNION')
+FROM sys.columns c
+WHERE c.object_id = OBJECT_ID('table1') AND c.name <> 'id'
+
+-- Remove the final UNION from the query string
+SET @sql = LEFT(@sql, LEN(@sql) - LEN('UNION'))
+
+-- Execute the comparison query
+EXEC (@sql)
