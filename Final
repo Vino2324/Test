@@ -1,0 +1,60 @@
+
+  SELECT id as t1id, 
+         column_name as t1_column_name, 
+         'table1' AS t1_source_table, 
+         column_value AS value1
+		INTO #ctetable1
+  FROM table1
+  UNPIVOT (column_value FOR column_name IN 
+            (column1, column2, column3, column4, column5, 
+             column6, column7, column8, column9, column10)
+           ) AS unpvt
+  WHERE id = 1
+  
+
+  SELECT id as t2id, 
+         column_name as t2_column_name, 
+         'table2' AS t2_source_table, 
+         --NULL AS value1, 
+         column_value AS value2
+		 into #ctetable2
+  FROM table2
+  UNPIVOT (column_value FOR column_name IN 
+            (column1, column2, column3, column4, column5, 
+             column6, column7, column8, column9, column10)
+           ) AS unpvt
+  WHERE id = 1
+
+ Select * from #ctetable1
+  Select * from #ctetable2
+
+
+Select * from #ctetable1 t1
+INNER JOIN #ctetable2 t2
+on t1.t1id = t2.t2id 
+AND t1.t1_column_name = t2.t2_column_name
+AND 
+t1.value1 <> t2.value2
+
+
+
+Select * from differences
+
+
+--unpivoted AS (
+--  SELECT id, 
+--         column_name, 
+--         source_table, 
+--         different_table,
+--         value_name, 
+--         value
+--  FROM differences
+--  UNPIVOT (value FOR value_name IN (value1, value2)) AS unpvt
+--)
+--SELECT 
+--* FROM unpivoted
+
+
+--HAVING 
+--    MAX(value) <> MIN(value);
+;
