@@ -1,0 +1,22 @@
+SELECT 
+    id, 
+    column_name, 
+    MAX(CASE WHEN table = 'table1' THEN value END) AS value_old,
+    MAX(CASE WHEN table = 'table2' THEN value END) AS value_new
+FROM (
+    SELECT 
+        t1.id,
+        UNNEST(ARRAY['column1', 'column2', 'column3', 'column4', 'column5', 'column6', 'column7', 'column8', 'column9', 'column10']) AS column_name,
+        'table1' AS table,
+        t1[column_name] AS value
+    FROM table1 AS t1
+    UNION ALL
+    SELECT 
+        t2.id,
+        UNNEST(ARRAY['column1', 'column2', 'column3', 'column4', 'column5', 'column6', 'column7', 'column8', 'column9', 'column10']) AS column_name,
+        'table2' AS table,
+        t2[column_name] AS value
+    FROM table2 AS t2
+) AS unpivoted
+WHERE value_old <> value_new OR (value_old IS NULL AND value_new IS NOT NULL) OR (value_old IS NOT NULL AND value_new IS NULL)
+GROUP BY id, column_name;
