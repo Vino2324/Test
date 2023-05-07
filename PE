@@ -1,0 +1,362 @@
+public interface IPriorityEntityRepository : IBaseRepository<PriorityEntity>
+{
+    Task<int> CreateAsync(PriorityEntity entity);
+    Task<IEnumerable<PriorityEntity>> GetAllAsync();
+    Task<bool> DeleteAsync(int entityId);
+}
+
+public class PriorityEntityRepository : BaseRepository<PriorityEntity>, IPriorityEntityRepository
+{
+    public PriorityEntityRepository(IDbConnection connection) : base(connection)
+    {
+    }
+
+    public async Task<int> CreateAsync(PriorityEntity entity)
+    {
+        string query = $@"INSERT INTO {typeof(T).Name}s 
+                        (EntityName, PriorityId, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn) 
+                        VALUES (@EntityName, @PriorityId, @CreatedBy, @CreatedOn, @ModifiedBy, @ModifiedOn);
+                        SELECT CAST(SCOPE_IDENTITY() as int)";
+        return await _connection.ExecuteScalarAsync<int>(query, entity);
+    }
+
+    public async Task<IEnumerable<PriorityEntity>> GetAllAsync()
+    {
+        string query = $"SELECT * FROM {typeof(T).Name}s";
+        return await _connection.QueryAsync<T>(query);
+    }
+
+    public async Task<bool> DeleteAsync(int entityId)
+    {
+        string query = $"DELETE FROM {typeof(T).Name}s WHERE EntityId = @Id";
+        var result = await _connection.ExecuteAsync(query, new { Id = entityId });
+        return result > 0;
+    }
+}
+
+AppSettings.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=PriorityEntityDb;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
+}
+
+Startup.cs
+
+public class Startup
+{
+    private readonly IConfiguration _configuration;
+
+    public Startup(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        string connectionString = _configuration.GetConnectionString("DefaultConnection");
+        services.AddScoped<IDbConnection>(x => new SqlConnection(connectionString));
+        services.AddTransient<IUnitOfWork, UnitOfWork>();
+        services.AddTransient<PriorityEntityService>();
+        services.AddControllers();
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+
+        app.UseRouting();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+    }
+}
+
+
+
+Controller:
+
+[ApiController]
+[Route("[controller]")]
+public class PriorityEntityController : ControllerBase
+{
+    private readonly PriorityEntityService _priorityEntityService;
+
+    public PriorityEntityController(PriorityEntityService priorityEntityService)
+    {
+        _priorityEntityService = priorityEntityService;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<PriorityEntity>>> GetAllAsync()
+    {
+        var entities = await _priorityEntityService.GetAllAsync();
+        return Ok(entities);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<PriorityEntity>> GetByIdAsync(int id)
+    {
+        var entity = await _priorityEntityService.GetByIdAsync(id);
+        if (entity == null)
+        {
+            return NotFound();
+        }
+        return Ok(entity);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<int>> InsertAsync(PriorityEntity entity)
+    {
+        int entityId = await _priorityEntityService.InsertAsync(entity);
+        return Ok(entityId);
+    }
+
+    [HttpPut]
+    public async Task<ActionResult<bool>> UpdateAsync(PriorityEntity entity)
+    {
+        bool result = await _priorityEntityService.UpdateAsync(entity);
+        if (!result)
+        {
+            return NotFound();
+        }
+        return Ok(result);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<bool>> DeleteAsync(int id)
+    {
+        bool result = await _priorityEntityService.DeleteAsync(id);
+        if (!result)
+        {
+            return NotFound();
+        }
+        return Ok(result);
+    }
+
+    [HttpGet("priority/{priorityId}")]
+    public async Task<ActionResult<IEnumerable<PriorityEntity>>> GetEntitiesByPriorityAsync(short priorityId)
+    {
+        var entities = await _priorityEntityService.GetEntitiesByPriorityAsync(priorityId);
+        return Ok(entities);
+    }
+}
+
+PriorityEntityService:
+
+public class PriorityEntityService
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public PriorityEntityService(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<IEnumerable<PriorityEntity>> GetAllAsync()
+    {
+        return await _unitOfWork.PriorityEntities.GetAllAsync();
+    }
+
+    public async Task<PriorityEntity> GetByIdAsync(int id)
+    {
+        return await _unitOfWork.PriorityEntities.GetByIdAsync(id);
+    }
+
+    public async Task<int> InsertAsync(PriorityEntity entity)
+    {
+        return await _unitOfWork.PriorityEntities.InsertAsync(entity);
+    }
+
+    public async Task<bool> UpdateAsync(PriorityEntity entity)
+    {
+        return await _unitOfWork.PriorityEntities.UpdateAsync(entity);
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        return await _unitOfWork.PriorityEntities.DeleteAsync(id);
+    }
+
+    public async Task<IEnumerable<PriorityEntity>> GetEntitiesByPriorityAsync(short priorityId)
+    {
+        return await _unitOfWork.PriorityEntities.GetEntitiesByPriorityAsync(priorityId);
+    }
+}
+
+UnitOfWork:
+
+public class UnitOfWork : IUnitOfWork, IDisposable
+{
+    private readonly IDbConnection _connection;
+    private IDbTransaction _transaction;
+    private bool _disposed;
+    private IPriorityEntityRepository _priorityEntities;
+
+    public UnitOfWork(IDbConnection connection)
+    {
+        _connection =        _connection.Open();
+        _transaction = _connection.BeginTransaction();
+    }
+
+    public IPriorityEntityRepository PriorityEntities =>
+        _priorityEntities ??= new PriorityEntityRepository(_connection, _transaction);
+
+    public void Commit()
+    {
+        try
+        {
+            _transaction?.Commit();
+        }
+        catch
+        {
+            _transaction?.Rollback();
+            throw;
+        }
+        finally
+        {
+            _transaction?.Dispose();
+            _transaction = null;
+        }
+    }
+
+    public void Rollback()
+    {
+        _transaction?.Rollback();
+        _transaction?.Dispose();
+        _transaction = null;
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _transaction?.Dispose();
+            _connection?.Dispose();
+            _disposed = true;
+        }
+        GC.SuppressFinalize(this);
+    }
+}
+
+public interface IUnitOfWork
+{
+    IPriorityEntityRepository PriorityEntities { get; }
+}
+
+public abstract class BaseRepository<T>
+{
+    private readonly IDbConnection _connection;
+
+    protected BaseRepository(IDbConnection connection)
+    {
+        _connection = connection;
+    }
+
+    public async Task<IEnumerable<T>> GetAllAsync()
+    {
+        string query = $"SELECT * FROM {typeof(T).Name}s";
+        return await _connection.QueryAsync<T>(query);
+    }
+
+    public async Task<T> GetByIdAsync(int id)
+    {
+        string query = $"SELECT * FROM {typeof(T).Name}s WHERE EntityId = @Id";
+        return await _connection.QueryFirstOrDefaultAsync<T>(query, new { Id = id });
+    }
+
+    public async Task<int> InsertAsync(T entity)
+    {
+        string query = $@"INSERT INTO {typeof(T).Name}s 
+                        (EntityName, PriorityId, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn) 
+                        VALUES (@EntityName, @PriorityId, @CreatedBy, @CreatedOn, @ModifiedBy, @ModifiedOn);
+                        SELECT CAST(SCOPE_IDENTITY() as int)";
+        return await _connection.ExecuteScalarAsync<int>(query, entity);
+    }
+
+    public async Task<bool> UpdateAsync(T entity)
+    {
+        string query = $@"UPDATE {typeof(T).Name}s SET 
+                        EntityName = @EntityName, 
+                        PriorityId = @PriorityId, 
+                        ModifiedBy = @ModifiedBy, 
+                        ModifiedOn = @ModifiedOn 
+                        WHERE EntityId = @EntityId";
+        var result = await _connection.ExecuteAsync(query, entity);
+        return result > 0;
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        string query = $"DELETE FROM {typeof(T).Name}s WHERE EntityId = @Id";
+        var result = await _connection.ExecuteAsync(query, new { Id = id });
+        return result > 0;
+    }
+}
+
+
+CREATE PROCEDURE sp_PriorityEntity_CRUD
+    @EntityId INT,
+    @EntityName VARCHAR(150) = NULL,
+    @PriorityId SMALLINT = NULL,
+    @CreatedBy VARCHAR(50) = NULL,
+    @ModifiedBy VARCHAR(50) = NULL,
+    @Operation CHAR(1)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF (@Operation = 'C')
+    BEGIN
+        INSERT INTO PriorityEntity (EntityId, EntityName, PriorityId, CreatedBy, ModifiedBy)
+        VALUES (@EntityId, @EntityName, @PriorityId, @CreatedBy, @ModifiedBy);
+    END
+
+    IF (@Operation = 'R')
+    BEGIN
+        SELECT EntityId, EntityName, PriorityId, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn
+        FROM PriorityEntity
+        WHERE EntityId = @EntityId;
+    END
+
+    IF (@Operation = 'U')
+    BEGIN
+        UPDATE PriorityEntity
+        SET EntityName = @EntityName, PriorityId = @PriorityId, ModifiedBy = @ModifiedBy, ModifiedOn = GETDATE()
+        WHERE EntityId = @EntityId;
+    END
+
+    IF (@Operation = 'D')
+    BEGIN
+        DELETE FROM PriorityEntity
+        WHERE EntityId = @EntityId;
+    END
+END
+
+
+public class PriorityEntity
+{
+    public int EntityId { get; set; }
+    public string EntityName { get; set; }
+    public short PriorityId { get; set; }
+    public string CreatedBy { get; set; }
+    public DateTime CreatedOn { get; set; }
+    public string ModifiedBy { get; set; }
+    public DateTime ModifiedOn { get; set; }
+}
+
+
+CREATE TABLE PriorityEntity (
+    EntityId INT NOT NULL PRIMARY KEY,
+    EntityName VARCHAR(150),
+    PriorityId SMALLINT,
+    CreatedBy VARCHAR(50),
+    CreatedOn DATETIME DEFAULT GETDATE(),
+    ModifiedBy VARCHAR(50),
+    ModifiedOn DATETIME DEFAULT GETDATE()
+);
