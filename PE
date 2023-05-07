@@ -1,3 +1,6 @@
+https://gavilan.blog/2020/01/16/blazor-multiple-selector-component/
+
+
 public interface IPriorityEntityRepository : IBaseRepository<PriorityEntity>
 {
     Task<int> CreateAsync(PriorityEntity entity);
