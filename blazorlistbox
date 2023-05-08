@@ -1,0 +1,63 @@
+@page "/selection"
+@inject IPriorityEntityService PriorityEntityService
+
+<h3>Selection Page</h3>
+
+<div class="row">
+    <div class="col-5">
+        <h4>Available Entities</h4>
+        <select multiple class="form-control" size="10" @bind="availableEntities" />
+    </div>
+    <div class="col-2">
+        <button class="btn btn-secondary" @onclick="HandleSelect">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        <button class="btn btn-secondary" @onclick="HandleUnselect">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+    </div>
+    <div class="col-5">
+        <h4>Selected Entities</h4>
+        <select multiple class="form-control" size="10" @bind="selectedEntities" />
+    </div>
+</div>
+
+<br />
+<br />
+
+<button class="btn btn-primary" @onclick="HandleSave">Save</button>
+
+@code {
+    private IEnumerable<PriorityEntity> availableEntities;
+    private List<PriorityEntity> selectedEntities = new List<PriorityEntity>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableEntities = await PriorityEntityService.GetAllAsync();
+    }
+
+    private void HandleSelect()
+    {
+        var entity = availableEntities.FirstOrDefault(e => e.IsSelected);
+        if (entity != null)
+        {
+            selectedEntities.Add(entity);
+            availableEntities = availableEntities.Where(e => e != entity);
+        }
+    }
+
+    private void HandleUnselect()
+    {
+        var entity = selectedEntities.FirstOrDefault(e => e.IsSelected);
+        if (entity != null)
+        {
+            availableEntities = availableEntities.Append(entity);
+            selectedEntities = selectedEntities.Where(e => e != entity).ToList();
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        // TODO: Save selected entities to the database
+    }
+}
