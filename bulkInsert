@@ -1,6 +1,14 @@
    Task<int> SaveAllAsync(IEnumerable<PriorityEntity> entities);
    
-   
+   public async Task<IEnumerable<PriorityEntity>> GetAllAsync()
+{
+    using var connection = new SqlConnection(_connectionString);
+    await connection.OpenAsync();
+
+    var result = await connection.QueryAsync<PriorityEntity>("GetAllPriorityEntities", commandType: CommandType.StoredProcedure);
+    return result;
+}
+
    
    public async Task<int> InsertBulkAsync(IEnumerable<PriorityEntity> entities)
 {
