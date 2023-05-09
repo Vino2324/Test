@@ -1,0 +1,232 @@
+@page "/priorityentitylist"
+@inject IPriorityEntityService priorityEntityService
+
+<style>
+    .card {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card-header {
+        background-color: #6c757d;
+        color: #fff;
+        font-weight: bold;
+        padding: 10px;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .list-group-item {
+        background-color: #fff;
+        color: #212529;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .list-group-item.active {
+        background-color: #6c757d;
+        color: #fff;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #0069d9;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    .form-control {
+        border-radius: 5px;
+        padding: 10px;
+    }
+
+    .select-list {
+        height: 250px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    .select-list-item {
+        background-color: #fff;
+        color: #212529;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .select-list-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .selected-list {
+        height: 250px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    .selected-list-item {
+        background-color: #6c757d;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .selected-list-item:hover {
+        background-color: #5a6268;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">Priority Entity List</div>
+   
+@page "/priorityentitylist"
+@inject IPriorityEntityService priorityEntityService
+
+<style>
+    /* Custom styles go here */
+</style>
+
+<div class="card">
+    <div class="card-header">Priority Entity List</div>
+    <div class="form-group">
+        <label for="searchInput">Search:</label>
+        <input id="searchInput" type="text" class="form-control" @bind-value="@searchTerm" @bind-value:event="oninput" />
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-header">Available Entities</div>
+                <div class="select-list">
+                    <div class="list-group">
+                        @foreach (var entity in filteredAvailableEntities)
+                        {
+                            <button type="button" class="list-group-item @((selectedAvailableEntities.Contains(entity)) ? "active" : "")" @onclick="() => HandleSelect(entity)">
+                                @entity.EntityName
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-header">Selected Entities</div>
+                <div class="selected-list">
+                    <div class="list-group">
+                        @foreach (var entity in selectedAvailableEntities)
+                        {
+                            <button type="button" class="list-group-item selected-list-item" @onclick="() => HandleUnselect(entity)">
+                                @entity.EntityName
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <button type="button" class="btn btn-primary" @onclick="Save">Save</button>
+        <button type="button" class="btn btn-secondary" @onclick="SelectAll">Select All</button>
+        <button type="button" class="btn btn-danger" @onclick="RemoveAllSelected">Remove All Selected</button>
+    </div>
+</div>
+
+@code {
+    private List<PriorityEntity> availableEntities = new List<PriorityEntity>();
+    private List<PriorityEntity> selectedAvailableEntities = new List<PriorityEntity>();
+    private string searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableEntities = (await priorityEntityService.GetAllAsync()).ToList();
+    }
+
+    private List<PriorityEntity> filteredAvailableEntities
+    {
+        get
+        {
+            return availableEntities.Where(e => e.EntityName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) && !selectedAvailableEntities.Contains(e)).ToList();
+        }
+    }
+
+    private void HandleSelect(PriorityEntity entity)
+    {
+        selectedAvailableEntities.Add(entity);
+        StateHasChanged();
+    }
+
+    private void HandleUnselect(PriorityEntity entity)
+    {
+        selectedAvailableEntities.Remove(entity);
+        StateHasChanged();
+    }
+
+    private void SelectAll()
+    {
+        selectedAvailableEntities.AddRange(filteredAvailableEntities);
+        StateHasChanged();
+    }
+
+    private void RemoveAllSelected()
+    {
+        selectedAvailableEntities.Clear();
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        await priorityEntityService.SaveAsync(selectedAvailableEntities);
+        selectedAvailableEntities.Clear();
+        StateHasChanged();
+    }
+}
