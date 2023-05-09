@@ -1,0 +1,62 @@
+   Task<int> SaveAllAsync(IEnumerable<PriorityEntity> entities);
+   
+   
+   
+   public async Task<int> InsertBulkAsync(IEnumerable<PriorityEntity> entities)
+{
+    using var connection = new SqlConnection(_connectionString);
+    await connection.OpenAsync();
+
+    var table = new DataTable();
+    table.Columns.Add("EntityId", typeof(int));
+    table.Columns.Add("EntityName", typeof(string));
+    table.Columns.Add("PriorityId", typeof(short));
+    table.Columns.Add("CreatedBy", typeof(string));
+    table.Columns.Add("CreatedOn", typeof(DateTime));
+    table.Columns.Add("ModifiedBy", typeof(string));
+    table.Columns.Add("ModifiedOn", typeof(DateTime));
+
+    foreach (var entity in entities)
+    {
+        table.Rows.Add(entity.EntityId, entity.EntityName, entity.PriorityId, entity.CreatedBy, entity.CreatedOn, entity.ModifiedBy, entity.ModifiedOn);
+    }
+
+    var parameters = new DynamicParameters();
+    parameters.Add("@Entities", table.AsTableValuedParameter("dbo.PriorityEntityType"));
+
+    var result = await connection.ExecuteScalarAsync<int>("InsertPriorityEntities", parameters, commandType: CommandType.StoredProcedure);
+    return result;
+}
+
+
+
+CREATE TYPE dbo.PriorityEntityType AS TABLE
+(
+    EntityId INT PRIMARY KEY,
+    EntityName VARCHAR(150),
+    PriorityId SMALLINT,
+    CreatedBy VARCHAR(50),
+    CreatedOn DATETIME DEFAULT GETDATE(),
+    ModifiedBy VARCHAR(50),
+    ModifiedOn DATETIME DEFAULT GETDATE()
+);
+
+GO
+
+CREATE PROCEDURE dbo.InsertPriorityEntities
+    @Entities dbo.PriorityEntityType READONLY
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    INSERT INTO PriorityEntity (EntityId, EntityName, PriorityId, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn)
+    SELECT EntityId, EntityName, PriorityId, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn FROM @Entities;
+    
+    SELECT @@ROWCOUNT;
+END;
+
+GO
+
+
+
+
