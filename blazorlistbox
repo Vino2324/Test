@@ -1,3 +1,117 @@
+@page "/priorityentitylist"
+@inject IPriorityEntityService priorityEntityService
+
+<div class="card">
+    <div class="card-header">Priority Entity List</div>
+    <div class="form-group">
+        <label for="searchInput">Search:</label>
+        <input id="searchInput" type="text" class="form-control" @bind-value="@searchTerm" @bind-value:event="oninput" />
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-header">Available Entities</div>
+                <div class="select-list">
+                    <div class="list-group">
+                        @foreach (var entity in filteredAvailableEntities)
+                        {
+                            <button type="button" class="list-group-item @((selectedAvailableEntities.Contains(entity)) ? "active" : "")" @onclick="() => HandleSelect(entity)">
+                                @entity.EntityName
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-header">Selected Entities</div>
+                <div class="selected-list">
+                    <div class="list-group">
+                        @foreach (var entity in selectedAvailableEntities)
+                        {
+                            <button type="button" class="list-group-item selected-list-item" @onclick="() => HandleUnselect(entity)">
+                                @entity.EntityName
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary" @onclick="Save">Save</button>
+            <button type="button" class="btn btn-secondary" @onclick="SelectAll">Select All</button>
+        </div>
+        <button type="button" class="btn btn-danger" @onclick="RemoveAllSelected">Remove All Selected</button>
+    </div>
+</div>
+
+@code {
+    private List<PriorityEntity> availableEntities = new List<PriorityEntity>();
+    private List<PriorityEntity> selectedAvailableEntities = new List<PriorityEntity>();
+    private string searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        availableEntities = await priorityEntityService.GetAllAsync();
+    }
+
+    private List<PriorityEntity> filteredAvailableEntities
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return availableEntities;
+
+            return availableEntities
+                .Where(e => e.EntityName.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void HandleSelect(PriorityEntity entity)
+    {
+        if (!selectedAvailableEntities.Contains(entity))
+            selectedAvailableEntities.Add(entity);
+    }
+
+    private void HandleUnselect(PriorityEntity entity)
+    {
+        if (selectedAvailableEntities.Contains(entity))
+            selectedAvailableEntities.Remove(entity);
+    }
+
+    private void SelectAll()
+    {
+        selectedAvailableEntities = new List<PriorityEntity>(filteredAvailableEntities);
+    }
+
+    private void RemoveAllSelected()
+    {
+        selectedAvailableEntities.Clear();
+    }
+
+    private async Task Save()
+    {
+        if (selectedAvailableEntities.Count > 0)
+        {
+            await priorityEntityService.SaveAsync(selectedAvailableEntities);
+            selectedAvailableEntities.Clear();
+            await LoadData();
+        }
+    }
+}
+
+------------------------------------------------------
+
+
 @page "/selection"
 @inject IPriorityEntityService PriorityEntityService
 
