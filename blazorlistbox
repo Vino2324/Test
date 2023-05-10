@@ -1,3 +1,12 @@
+<select multiple class="list-group form-select" style="height: 400px; overflow-y: auto;" @bind="selectedAvailableEntities">
+    @foreach (var entity in filteredAvailableEntities)
+    {
+        <option value="@entity">@entity.EntityName</option>
+    }
+</select>
+
+
+
 private void HandleSelect(PriorityEntity entity)
 {
     if (Keyboard.Modifiers == ModifierKeys.Control)
