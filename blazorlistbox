@@ -1,3 +1,23 @@
+private void HandleSelect(PriorityEntity entity)
+{
+    if (Keyboard.Modifiers == ModifierKeys.Control)
+    {
+        if (selectedAvailableEntities.Contains(entity))
+            selectedAvailableEntities.Remove(entity);
+        else
+            selectedAvailableEntities.Add(entity);
+    }
+    else
+    {
+        selectedAvailableEntities.Clear();
+        selectedAvailableEntities.Add(entity);
+    }
+}
+
+
+----------------------------------------
+
+
 @page "/priorityentitylist"
 @inject IPriorityEntityService priorityEntityService
 
