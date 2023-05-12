@@ -1,3 +1,19 @@
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("removeFocus");
+        }
+    }
+    
+    
+    
+    window.removeFocus = function () {
+    document.activeElement.blur();
+}
+
+
+
 using Microsoft.JSInterop;
 using System.Threading.Tasks;
 
