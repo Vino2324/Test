@@ -1,10 +1,28 @@
+public class PriorityEntityEqualityComparer : IEqualityComparer<PriorityEntity>
+{
+    public bool Equals(PriorityEntity x, PriorityEntity y)
+    {
+        // Implement your custom equality comparison logic here
+        // Compare the properties that define the equality of PriorityEntity objects
+        return x.EntityId == y.EntityId;
+    }
+
+    public int GetHashCode(PriorityEntity obj)
+    {
+        // Implement your custom hash code generation logic here
+        // Generate a hash code based on the properties used for equality comparison
+        return obj.EntityId.GetHashCode();
+    }
+}
+
+
 public List<PriorityEntity> GetFilteredAvailableEntities()
 {
     var filteredList = availableEntities
         .Where(entity =>
             string.IsNullOrWhiteSpace(searchTerm) ||
             entity.EntityName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-        .Where(entity => !selectedAvailableEntities.Contains(entity))
+        .Except(selectedAvailableEntities, new PriorityEntityEqualityComparer())
         .ToList();
 
     return filteredList;
