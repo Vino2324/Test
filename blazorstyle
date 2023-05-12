@@ -1,3 +1,40 @@
+using Microsoft.JSInterop;
+using System.Threading.Tasks;
+
+public static class BlazorFocusHelper
+{
+    public static async Task RemoveFocusAsync(IJSRuntime jsRuntime)
+    {
+        await jsRuntime.InvokeVoidAsync("BlazorFocusHelper.removeFocus");
+    }
+}
+
+
+@inject IJSRuntime JSRuntime
+
+@code {
+    private async Task HandleSelect(PriorityEntity entity)
+    {
+        if (selectedAvailableEntities.Contains(entity))
+        {
+            // Entity is already selected, remove it
+            selectedAvailableEntities.Remove(entity);
+        }
+        else
+        {
+            // Entity is not selected, add it
+            selectedAvailableEntities.Add(entity);
+        }
+
+        await BlazorFocusHelper.RemoveFocusAsync(JSRuntime);
+    }
+
+    // Rest of the code
+}
+
+
+
+
 public class PriorityEntityEqualityComparer : IEqualityComparer<PriorityEntity>
 {
     public bool Equals(PriorityEntity x, PriorityEntity y)
