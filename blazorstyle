@@ -1,4 +1,13 @@
-            <div class="input-group-append">
+          <div style="background-color: #f2f2f2; padding: 20px;">
+          <button type="button" class="btn btn-primary" data-toggle="popover" title="Popover Title" data-content="This is the popover content.">Popover Button</button>
+        </div>
+          <script>
+    $(function () {
+      $('[data-toggle="popover"]').popover()
+    })
+  </script>
+        
+        <div class="input-group-append">
               <span class="input-group-text" id="search-tooltip" data-toggle="tooltip" data-placement="right" title="Search Tooltip">
                 <i class="fa fa-info-circle"></i>
               </span>
