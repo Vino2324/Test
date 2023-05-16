@@ -1,4 +1,143 @@
-  protected override async Task OnAfterRenderAsync(bool firstRender)
+@using BlazorFontAwesome
+
+dotnet add package BlazorFontAwesome
+
+@page "/listboxes"
+
+<h3>List Boxes</h3>
+
+<div>
+    <label for="availableItems">Available Items:</label>
+    <input type="text" @bind="searchAvailableItems" placeholder="Search..." class="search-input" />
+    <select id="availableItems" multiple size="5" class="listbox">
+        @foreach (var item in availableItems.Where(a => a.Contains(searchAvailableItems)))
+        {
+            <option value="@item">@item</option>
+        }
+    </select>
+</div>
+
+<div>
+    <button @onclick="MoveItem" class="btn">
+        <BlazorFontAwesome.FaIcon Icon="FaIcons.ChevronRight" />
+    </button>
+    <button @onclick="MoveItem" class="btn" disabled="@IsMoveAllDisabled">
+        <BlazorFontAwesome.FaIcon Icon="FaIcons.ChevronDoubleRight" />
+    </button>
+    <button @onclick="MoveItem" class="btn" disabled="@IsMoveAllDisabled">
+        <BlazorFontAwesome.FaIcon Icon="FaIcons.ChevronDoubleLeft" />
+    </button>
+    <button @onclick="MoveItem" class="btn">
+        <BlazorFontAwesome.FaIcon Icon="FaIcons.ChevronLeft" />
+    </button>
+</div>
+
+<div>
+    <label for="selectedItems">Selected Items:</label>
+    <input type="text" @bind="searchSelectedItems" placeholder="Search..." class="search-input" />
+    <select id="selectedItems" multiple size="5" class="listbox">
+        @foreach (var item in selectedItems.Where(a => a.Contains(searchSelectedItems)))
+        {
+            <option value="@item">@item</option>
+        }
+    </select>
+</div>
+
+<style>
+    .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: #ffffff;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+
+    .btn:disabled {
+        background-color: #dcdcdc;
+        cursor: not-allowed;
+    }
+
+    .listbox {
+        width: 200px;
+        height: 120px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 4px;
+        font-size: 14px;
+    }
+
+    .listbox option {
+        padding: 4px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 4px;
+        margin-bottom: 4px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+</style>
+
+@code {
+    private List<string> availableItems = new List<string>
+    {
+        "Item 1",
+        "Item 2",
+        "Item 3",
+        "Item 4",
+        "Item 5"
+    };
+
+    private List<string> selectedItems = new List<string>();
+
+    private string selectedAvailableItem;
+    private string selectedItem;
+
+    private bool IsMoveAllDisabled => availableItems.Count == 0;
+
+    private string searchAvailableItems;
+    private string searchSelectedItems;
+
+    private void MoveItem()
+    {
+        if (!string.IsNullOrEmpty(selectedAvailableItem))
+        {
+            selectedItems.Add(selectedAvailableItem);
+            availableItems.Remove(selectedAvailableItem
+            selectedAvailableItem = null;
+        }
+        else if (!string.IsNullOrEmpty(selectedItem))
+        {
+            availableItems.Add(selectedItem);
+            selectedItems.Remove(selectedItem);
+            selectedItem = null;
+        }
+    }
+}
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ ------------------------------------------------------------
+ 
+ 
+ protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
