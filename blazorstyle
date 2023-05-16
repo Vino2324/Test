@@ -1,4 +1,19 @@
-@using BlazorFontAwesome
+<div class="col">
+        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+          <div class="btn-group" role="group" aria-label="Button Group">
+            <button type="button" class="btn btn-primary">Button 1</button>
+            <button type="button" class="btn btn-primary">Button 2</button>
+          </div>
+          <br>
+          <div class="btn-group" role="group" aria-label="Button Group">
+            <button type="button" class="btn btn-primary">Button 3</button>
+            <button type="button" class="btn btn-primary">Button 4</button>
+          </div>
+        </div>
+      </div>
+      
+      
+      @using BlazorFontAwesome
 
 dotnet add package BlazorFontAwesome
 
