@@ -1,4 +1,24 @@
-          <div style="background-color: #f2f2f2; padding: 20px;">
+@page "/mycomponent"
+@using BlazorStrap
+
+<div>
+    <BSButton Popover="popover1">Popover Button</BSButton>
+</div>
+
+<BSPopover Popover="@popover1">
+    <div class="popover-header">Popover Title</div>
+    <div class="popover-body">
+        This is the popover content.
+    </div>
+</BSPopover>
+
+@code {
+    BSPopoverInstance popover1 = new BSPopoverInstance();
+}
+
+
+
+<div style="background-color: #f2f2f2; padding: 20px;">
           <button type="button" class="btn btn-primary" data-toggle="popover" title="Popover Title" data-content="This is the popover content.">Popover Button</button>
         </div>
           <script>
