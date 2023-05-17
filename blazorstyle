@@ -1,3 +1,43 @@
+@inject IJSRuntime JSRuntime
+
+<!-- Rest of the code -->
+
+<div class="form-group">
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Search" @bind="SearchText" />
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" @onclick="ShowPopover" data-placement="top" data-content="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">
+                <i class="fas fa-info-circle"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string SearchText { get; set; }
+
+    private async Task ShowPopover()
+    {
+        await JSRuntime.InvokeVoidAsync("createPopover", "popoverButton");
+    }
+}
+
+<script>
+    function createPopover(elementId) {
+        const element = document.getElementById(elementId);
+        const popover = new bootstrap.Popover(element, {
+            trigger: 'focus',
+            html: true
+        });
+        popover.show();
+    }
+</script>
+------------------------
+
+
+
+
+
 <!DOCTYPE html>
 <html>
 <head>
