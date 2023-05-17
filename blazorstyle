@@ -1,5 +1,20 @@
 <script>
     function createPopover(elementId) {
+        const element = document.getElementById(elementId);
+        const popover = new bootstrap.Popover(element, {
+            trigger: 'focus',
+            html: true,
+            template: '<div class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-header">Search Help</h3><div class="popover-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div></div>'
+        });
+        popover.show();
+    }
+</script>
+
+
+
+
+<script>
+    function createPopover(elementId) {
         $('#' + elementId).popover('show');
     }
 </script>
