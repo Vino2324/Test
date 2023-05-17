@@ -1,3 +1,39 @@
+<script>
+    function createPopover(elementId) {
+        $('#' + elementId).popover('show');
+    }
+</script>
+@inject IJSRuntime JSRuntime
+
+<!-- Rest of the code -->
+
+<div class="form-group">
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Search" @bind="SearchText" />
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" @onclick="ShowPopover" data-toggle="popover" data-placement="top" data-html="true" data-title="Search Help" data-content="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">
+                <i class="fas fa-info-circle"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string SearchText { get; set; }
+
+    private async Task ShowPopover()
+    {
+        await JSRuntime.InvokeVoidAsync("createPopover", "popoverButton");
+    }
+}
+
+
+
+------------------------------
+
+
+
+
 @inject IJSRuntime JSRuntime
 
 <!-- Rest of the code -->
