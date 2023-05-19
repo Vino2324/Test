@@ -1,0 +1,41 @@
+<style>
+    .navbar {
+        position: relative;
+    }
+
+    .submenu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: #fff;
+        padding: 0;
+        list-style: none;
+    }
+
+    .navbar-item:hover .submenu {
+        display: block;
+    }
+
+    .submenu-item {
+        padding: 8px;
+    }
+</style>
+
+<nav class="navbar">
+    <div class="navbar-menu">
+        <ul class="navbar-items">
+            <li class="navbar-item">
+                <a href="#">Entity Manager</a>
+                <ul class="submenu">
+                    <li class="submenu-item">
+                        <a href="#">Priority</a>
+                    </li>
+                    <li class="submenu-item">
+                        <a href="#">Disabled Entity</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>
