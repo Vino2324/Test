@@ -1,3 +1,75 @@
+// custom.js
+window.toggleSubmenu = function (elementId) {
+    var submenu = document.getElementById(elementId);
+    submenu.classList.toggle("show");
+};
+
+window.hideSubmenu = function (elementId) {
+    var submenu = document.getElementById(elementId);
+    submenu.classList.remove("show");
+};
+
+
+
+<!-- MenuComponent.razor -->
+<div class="menu-item">
+    <div class="menu-item-content" @onmouseover="ShowSubmenu" @onmouseout="HideSubmenu">
+        Menu Item
+    </div>
+
+    @if (showSubmenu)
+    {
+        <div class="submenu" id="submenu" @onmouseover="KeepSubmenu" @onmouseout="HideSubmenu" @onclick="HandleSubmenuClicked">
+            <SubMenuComponent />
+        </div>
+    }
+</div>
+
+@code {
+    private bool showSubmenu = false;
+    private bool keepSubmenu = false;
+
+    private void ShowSubmenu()
+    {
+        showSubmenu = true;
+        JSRuntime.InvokeVoidAsync("toggleSubmenu", "submenu");
+    }
+
+    private void HideSubmenu()
+    {
+        if (!keepSubmenu)
+        {
+            showSubmenu = false;
+            JSRuntime.InvokeVoidAsync("hideSubmenu", "submenu");
+        }
+    }
+
+    private void KeepSubmenu()
+    {
+        keepSubmenu = true;
+    }
+
+    private void HandleSubmenuClicked()
+    {
+        keepSubmenu = false;
+    }
+}
+
+
+
+
+
+
+<script src="js/custom.js"></script>
+
+
+
+------------------------------------------
+
+
+
+
+
 <!-- MenuComponent.razor -->
 <div class="menu-item">
     <div @onmouseover="ShowSubmenu" @onmouseout="HideSubmenu">
