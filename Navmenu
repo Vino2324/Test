@@ -1,3 +1,67 @@
+<!-- MenuComponent.razor -->
+<div class="menu-item" @onmouseover="ShowSubmenu" @onmouseout="HideSubmenu">
+    Menu Item
+
+    @if (showSubmenu)
+    {
+        <div class="submenu" @onmouseover="KeepSubmenu" @onmouseout="HideSubmenu">
+            <!-- Submenu items -->
+            <div>Submenu Item 1</div>
+            <div>Submenu Item 2</div>
+            <div>Submenu Item 3</div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool showSubmenu = false;
+    private bool keepSubmenu = false;
+
+    private void ShowSubmenu()
+    {
+        showSubmenu = true;
+    }
+
+    private void HideSubmenu()
+    {
+        if (!keepSubmenu)
+        {
+            showSubmenu = false;
+        }
+    }
+
+    private void KeepSubmenu()
+    {
+        keepSubmenu = true;
+    }
+}
+
+/* styles.css */
+.menu-item {
+    position: relative;
+}
+
+.submenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #f1f1f1;
+    padding: 5px;
+    display: none;
+    z-index: 1; /* Add a higher z-index to keep the submenu above other elements */
+}
+
+.menu-item:hover .submenu,
+.submenu:hover {
+    display: block;
+}
+
+
+
+
+
+
+
 @inherits LayoutComponentBase
 
 <div class="container">
