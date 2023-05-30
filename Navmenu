@@ -1,4 +1,92 @@
 <!-- MenuComponent.razor -->
+<div class="menu-item">
+    <div @onmouseover="ShowSubmenu" @onmouseout="HideSubmenu">
+        Menu Item
+    </div>
+
+    @if (showSubmenu)
+    {
+        <SubMenuComponent @onSubmenuClicked="HideSubmenu" />
+    }
+</div>
+
+@code {
+    private bool showSubmenu = false;
+
+    private void ShowSubmenu()
+    {
+        showSubmenu = true;
+    }
+
+    private void HideSubmenu()
+    {
+        showSubmenu = false;
+    }
+}
+
+
+<!-- SubMenuComponent.razor -->
+<div class="submenu" @onmouseover="KeepSubmenu" @onmouseout="HideSubmenu">
+    <!-- Submenu items -->
+    <div @onclick="OnSubmenuItemClicked">Submenu Item 1</div>
+    <div @onclick="OnSubmenuItemClicked">Submenu Item 2</div>
+    <div @onclick="OnSubmenuItemClicked">Submenu Item 3</div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback onSubmenuClicked { get; set; }
+
+    private bool keepSubmenu = false;
+
+    private void KeepSubmenu()
+    {
+        keepSubmenu = true;
+    }
+
+    private void HideSubmenu()
+    {
+        if (!keepSubmenu)
+        {
+            onSubmenuClicked.InvokeAsync();
+        }
+    }
+
+    private void OnSubmenuItemClicked()
+    {
+        keepSubmenu = false;
+    }
+}
+
+
+/* styles.css */
+.menu-item {
+    position: relative;
+}
+
+.submenu {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    background-color: #f1f1f1;
+    padding: 5px;
+    display: none;
+}
+
+.menu-item:hover .submenu,
+.submenu:hover {
+    display: block;
+}
+
+
+
+-------------------------
+
+
+
+
+
+<!-- MenuComponent.razor -->
 <div class="menu-item" @onmouseover="ShowSubmenu" @onmouseout="HideSubmenu">
     Menu Item
 
