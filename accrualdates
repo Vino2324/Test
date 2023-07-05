@@ -1,0 +1,24 @@
+WITH CTE AS (
+  SELECT
+    transport_id,
+    availabledates AS "Current date",
+    ROW_NUMBER() OVER (PARTITION BY transport_id ORDER BY availabledates) AS rn
+  FROM
+    YourTableName
+)
+SELECT
+  transport_id,
+  "Current date",
+  "Previous date"
+FROM (
+  SELECT
+    C1.transport_id,
+    C1."Current date",
+    C2."Current date" AS "Previous date",
+    ROW_NUMBER() OVER (PARTITION BY C1.transport_id, C1."Current date" ORDER BY C1."Current date") AS transport_rn
+  FROM
+    CTE C1
+  LEFT JOIN
+    CTE C2 ON C1.transport_id = C2.transport_id AND C1.rn = C2.rn + 1
+) AS subquery
+WHERE transport_rn = 1;
