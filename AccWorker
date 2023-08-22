@@ -1,0 +1,116 @@
+using System;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+namespace MyWorkerService
+{
+    public class Worker : BackgroundService
+    {
+        private readonly ILogger<Worker> _logger;
+        private readonly HttpClient _httpClient;
+
+        public Worker(ILogger<Worker> logger, IHttpClientFactory httpClientFactory)
+        {
+            _logger = logger;
+            _httpClient = httpClientFactory.CreateClient();
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    // Create a sample input object
+                    var inputObject = new ComplexInputObject
+                    {
+                        Property1 = "SampleValue",
+                        Property2 = 42
+                    };
+
+                    // Serialize the input object
+                    var jsonContent = new StringContent(JsonSerializer.Serialize(inputObject), Encoding.UTF8, "application/json");
+
+                    // Make the HTTP POST request
+                    var response = await _httpClient.PostAsync("https://localhost:5001/api/YourController", jsonContent, stoppingToken);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseBody = await response.Content.ReadAsStringAsync();
+                        var resultObject = JsonSerializer.Deserialize<ComplexResultObject>(responseBody);
+                        _logger.LogInformation($"Received result: {resultObject.ResultProperty1}, {resultObject.ResultProperty2}");
+                    }
+                    else
+                    {
+                        _logger.LogError($"HTTP request failed with status code: {response.StatusCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "An error occurred while making the HTTP request.");
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            }
+        }
+    }
+
+    public class ComplexInputObject
+    {
+        public string Property1 { get; set; }
+        public int Property2 { get; set; }
+    }
+
+    public class ComplexResultObject
+    {
+        public string ResultProperty1 { get; set; }
+        public int ResultProperty2 { get; set; }
+    }
+}
+
+
+
+public void ConfigureServices(IServiceCollection services)
+{
+    // Other service registrations
+    
+    // Register HttpClient as a singleton
+    services.AddHttpClient();
+}
+
+
+public class Worker : BackgroundService
+{
+    private readonly ILogger<Worker> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public Worker(ILogger<Worker> logger, IHttpClientFactory httpClientFactory)
+    {
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var httpClient = _httpClientFactory.CreateClient();
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                // Rest of the code using httpClient
+
+                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while making the HTTP request.");
+            }
+        }
+    }
+}
