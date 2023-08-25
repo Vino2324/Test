@@ -16,6 +16,70 @@ namespace YourNamespace
             _httpClient = new HttpClient { BaseAddress = new Uri(baseAddress) };
         }
 
+        public async Task<(bool IsSuccess, HttpResponseMessage Response)> SendAsync(HttpMethod method, string endpoint, object content = null, string authToken = null)
+        {
+            var request = new HttpRequestMessage(method, endpoint);
+
+            AddAuthorizationHeader(authToken);
+
+            if (content != null)
+            {
+                var jsonContent = JsonConvert.SerializeObject(content);
+                request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            }
+
+            var response = await _httpClient.SendAsync(request);
+
+            return (response.IsSuccessStatusCode, response);
+        }
+
+        private void AddAuthorizationHeader(string authToken)
+        {
+            if (!string.IsNullOrEmpty(authToken))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+            }
+        }
+
+        public async Task<(bool IsSuccess, TResponse Data)> SendAsync<TResponse>(HttpMethod method, string endpoint, object content = null, string authToken = null)
+        {
+            var (isSuccess, response) = await SendAsync(method, endpoint, content, authToken);
+
+            if (isSuccess)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<TResponse>(responseContent);
+                return (true, responseData);
+            }
+            else
+            {
+                return (false, default);
+            }
+        }
+    }
+}
+
+------------------------------------
+
+
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+
+namespace YourNamespace
+{
+    public class GenericHttpClient
+    {
+        private readonly HttpClient _httpClient;
+
+        public GenericHttpClient(string baseAddress)
+        {
+            _httpClient = new HttpClient { BaseAddress = new Uri(baseAddress) };
+        }
+
         public async Task<(bool IsSuccess, TResponse Data)> SendAsync<TResponse>(HttpMethod method, string endpoint, object content = null, string authToken = null)
         {
             var request = new HttpRequestMessage(method, endpoint);
