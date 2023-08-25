@@ -1,0 +1,86 @@
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+
+namespace YourNamespace
+{
+    public class GenericHttpClient
+    {
+        private readonly HttpClient _httpClient;
+
+        public GenericHttpClient(string baseAddress)
+        {
+            _httpClient = new HttpClient { BaseAddress = new Uri(baseAddress) };
+        }
+
+        public async Task<HttpResponseMessage> SendAsync(HttpMethod method, string endpoint, object content = null, string authToken = null)
+        {
+            var request = new HttpRequestMessage(method, endpoint);
+
+            AddAuthorizationHeader(authToken);
+
+            if (content != null)
+            {
+                var jsonContent = JsonConvert.SerializeObject(content);
+                request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            }
+
+            return await _httpClient.SendAsync(request);
+        }
+
+        private void AddAuthorizationHeader(string authToken)
+        {
+            if (!string.IsNullOrEmpty(authToken))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+            }
+        }
+
+        public async Task<TResponse> SendAsync<TResponse>(HttpMethod method, string endpoint, object content = null, string authToken = null)
+        {
+            var response = await SendAsync(method, endpoint, content, authToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<TResponse>(responseContent);
+            }
+            else
+            {
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}");
+            }
+        }
+    }
+}
+
+
+services.AddSingleton<GenericHttpClient>(new GenericHttpClient("https://api.example.com"));
+
+
+
+public class UserController : Controller
+{
+    private readonly GenericHttpClient _httpClient;
+
+    public UserController(GenericHttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetUser(int userId)
+    {
+        var response = await _httpClient.SendAsync<UserResponse>(HttpMethod.Get, $"/users/{userId}");
+        return Ok(response);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateUser([FromBody] UserRequest newUser)
+    {
+        var response = await _httpClient.SendAsync<UserResponse>(HttpMethod.Post, "/users", newUser);
+        return Created("", response);
+    }
+}
