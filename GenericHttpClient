@@ -52,6 +52,45 @@ namespace YourNamespace
     }
 }
 
+public class UserController : Controller
+{
+    private readonly GenericHttpClient _httpClient;
+
+    public UserController(GenericHttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetUser(int userId)
+    {
+        var (isSuccess, response) = await _httpClient.SendAsync<UserResponse>(HttpMethod.Get, $"/users/{userId}");
+        
+        if (isSuccess)
+        {
+            return Ok(response);
+        }
+        else
+        {
+            return BadRequest("Failed to retrieve user.");
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateUser([FromBody] UserRequest newUser)
+    {
+        var (isSuccess, response) = await _httpClient.SendAsync<UserResponse>(HttpMethod.Post, "/users", newUser);
+        
+        if (isSuccess)
+        {
+            return Created("", response);
+        }
+        else
+        {
+            return BadRequest("Failed to create user.");
+        }
+    }
+}
 
 ---------------------------------
 
