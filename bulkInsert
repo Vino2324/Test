@@ -65,6 +65,52 @@ END;
 
 GO
 
+-----------------------------------------------------------
+
+
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
+
+
+CREATE TYPE dbo.ProductTVPType AS TABLE
+(
+    Id INT,
+    Name NVARCHAR(100),
+    Price DECIMAL(18, 2)
+);
+
+
+CREATE PROCEDURE dbo.InsertProducts
+    @Products ProductTVPType READONLY
+AS
+BEGIN
+    INSERT INTO Products (Id, Name, Price)
+    SELECT Id, Name, Price FROM @Products;
+END;
+
+
+using (var connection = new SqlConnection(connectionString))
+{
+    connection.Open();
+
+    var products = GetProductsToInsert(); // Get your list of Product objects
+
+    var tvp = new DataTable();
+    tvp.Columns.Add("Id", typeof(int));
+    tvp.Columns.Add("Name", typeof(string));
+    tvp.Columns.Add("Price", typeof(decimal));
+
+    foreach (var product in products)
+    {
+        tvp.Rows.Add(product.Id, product.Name, product.Price);
+    }
+
+    connection.Execute("dbo.InsertProducts", new { Products = tvp.AsTableValuedParameter("ProductTVPType") }, commandType: CommandType.StoredProcedure);
+}
 
 
 
