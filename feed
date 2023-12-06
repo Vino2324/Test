@@ -15,3 +15,33 @@ var result = from rr in resultTable
                     (aa?.AccountID != null) ? (aa.ActiveAccount ?? 0) :
                     (ab?.AccountID != null) ? (ab.ActiveAccount ?? 0) :
                     0) == 0);
+
+
+
+---------------------------------
+
+
+
+var result = from rr in resultTable
+             join aa in accountTable on new { rr.TransAccount, rr.Entity.ID } equals new { TransAccount = aa.AccountNum, aa.EntityID } into aaGroup
+             from aa in aaGroup.DefaultIfEmpty()
+             join ab in accountTable on new { rr.TransAccount, rr.Entity.ID } equals new { TransAccount = ab.AccountNum2, ab.EntityID } into abGroup
+             from ab in abGroup.DefaultIfEmpty()
+             where rr.TransID != null &&
+                   dbContext.SSGlobalPlusAutoFeed_UsedTransIDList.Any(t => t.SequenceID == rr.SequenceID) &&
+                   ((aa == null || aa.ActiveAccount == null || aa.ActiveAccount == 0) &&
+                    (ab == null || ab.ActiveAccount == null || ab.ActiveAccount == 0))
+             let aaActiveAccount = aa?.ActiveAccount ?? 0
+             let abActiveAccount = ab?.ActiveAccount ?? 0
+             group rr by rr.SequenceID into grouped
+             where grouped.All(gr =>
+                grouped.Min(caseValue =>
+                    (caseValue.aa != null && caseValue.ab != null) ?
+                        ((caseValue.aaActiveAccount == 0 || caseValue.abActiveAccount == 0) ? 0 : 1) :
+                    (caseValue.aa != null) ? (caseValue.aaActiveAccount == 0 ? 0 : 1) :
+                    (caseValue.ab != null) ? (caseValue.abActiveAccount == 0 ? 0 : 1) :
+                    0) == 0)
+             select new
+             {
+                 SequenceID = grouped.Key
+             };
