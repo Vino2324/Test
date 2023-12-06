@@ -20,7 +20,23 @@ var result = from rr in resultTable
 
 ---------------------------------
 
+var result = yourData
+    .Where(item => (item.aa.account_id != null && item.ab.account_id != null) &&
+                   (
+                       (item.aa.account_id != null && item.ab.account_id != null) ?
+                           (
+                               (item.aa.active_account ?? 0) == 0 || (item.ab.active_account ?? 0) == 0 ? 0 : 1
+                           ) :
+                           (
+                               item.aa.account_id != null ? (item.aa.active_account ?? 0) :
+                               item.ab.account_id != null ? (item.ab.active_account ?? 0) :
+                               0
+                           )
+                   ) == 0);
 
+
+
+-------------------------
 
 var result = from rr in resultTable
              join aa in accountTable on new { rr.TransAccount, rr.Entity.ID } equals new { TransAccount = aa.AccountNum, aa.EntityID } into aaGroup
