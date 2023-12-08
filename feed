@@ -1,3 +1,36 @@
+var result = dbContext.YourTable
+    .Select(rr => new
+    {
+        ConcatenatedValue = (
+            (rr.FacilityId != null && f.AssetId != null)
+                ? (f.AssetId ?? string.Empty)
+                : (rr.IssueId != null && i.AssetId != null)
+                    ? (i.AssetId ?? string.Empty)
+                    : string.Empty
+            ) +
+            '/' +
+            (rr.TransCategory == "EN"
+                ? (ed => ed.Comments != null
+                    ? (ed.Comments.Length > 35 ? ed.Comments.Substring(0, 35) : ed.Comments)
+                    : string.Empty,
+                    ed => dbContext.EntityTransaction
+                        .Join(dbContext.CashTransaction,
+                            ed => ed.EntTransId,
+                            cd => cd.EntTransId,
+                            (ed, cd) => new { ed, cd })
+                        .Where(joinResult => joinResult.cd.CashTransId == rr.TransId)
+                        .Select(joinResult => joinResult.ed)
+                        .FirstOrDefault())
+                : string.Empty
+            ) +
+            '/' +
+            (rr.IssuerName ?? string.Empty)
+    })
+    .ToList();
+
+-------------------------------------
+
+
 var result = from tellerDiff in dbContext.TellerDiff
              where Math.Abs(tellerDiff.CollectAmount - tellerDiff.WireAmount) <= StellerDiffAllow
              select new
