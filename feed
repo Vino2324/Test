@@ -1,3 +1,26 @@
+var result = from r in dbContext.Result
+             where r.DataSource == "US" && r.Currency == "USD"
+             group r by new { r.SequenceId, r.DdaNumber } into grouped
+             let sum1 = grouped.Sum(g =>
+                 (decimal) (g.PrincProceedsAmt ?? 0) * (g.CashTransType == "R" ? 1 : -1) +
+                 (decimal) (g.IntProceedsAmt ?? 0) * (g.CashTransType == "R" ? 1 : -1)
+             )
+             let sum2 = grouped.Sum(g => g.WireAmount ?? 0)
+             where sum1 != sum2
+             select new
+             {
+                 grouped.Key.SequenceId,
+                 grouped.Key.DdaNumber,
+                 SourceRef = grouped.FirstOrDefault()?.SourceRef,
+                 IssuerName = grouped.FirstOrDefault()?.IssuerName,
+                 CollectAmount = grouped.FirstOrDefault()?.CollectAmount,
+                 WireAmount = grouped.FirstOrDefault()?.WireAmount,
+                 EntityId = grouped.FirstOrDefault()?.EntityId
+             };
+
+----------------------------------------------
+
+
 var result = from rr in resultTable
              join aa in accountTable on new { rr.TransAccount, rr.Entity.ID } equals new { TransAccount = aa.AccountNum, aa.EntityID }
                  into aaGroup
