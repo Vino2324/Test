@@ -1,3 +1,23 @@
+var result = from tellerDiff in dbContext.TellerDiff
+             where Math.Abs(tellerDiff.CollectAmount - tellerDiff.WireAmount) <= StellerDiffAllow
+             select new
+             {
+                 SequenceId = tellerDiff.SequenceId,
+                 CashTransType = Math.Abs(tellerDiff.CollectAmount - tellerDiff.WireAmount) <= StellerDiffAllow ? "P" : "R",
+                 WireAmount = Math.Abs(tellerDiff.CollectAmount - tellerDiff.WireAmount),
+                 DdaNumber = tellerDiff.DdaNumber,
+                 SourceRef = tellerDiff.SourceRef,
+                 IssuerName = tellerDiff.IssuerName,
+                 SettleDate = DateTime.Now.ToString("MM/dd/yyyy"),
+                 Currency = "USD",
+                 CashTransType = tellerDiff.CollectAmount > tellerDiff.WireAmount ? "R" : "D",
+                 TransAccount = tellerDiff.PrincProceedsAmt,
+                 EntityId = tellerDiff.EntityId
+             };
+
+
+------------------------------
+
 var result = from r in dbContext.Result
              where r.DataSource == "US" && r.Currency == "USD"
              group r by new { r.SequenceId, r.DdaNumber } into grouped
