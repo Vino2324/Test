@@ -1,0 +1,69 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+
+class Program
+{
+    private static readonly object dbContextLock = new object();
+
+    static async Task Main()
+    {
+        List<int> ids = GetListOfIds(); // Replace with your list of IDs
+        int batchSize = 10; // Adjust batch size as needed
+
+        ConcurrentQueue<int> idsToAddToNewCollection = new ConcurrentQueue<int>();
+
+        List<List<int>> batches = ids
+            .Select((id, index) => new { id, index })
+            .GroupBy(x => x.index / batchSize)
+            .Select(g => g.Select(x => x.id).ToList())
+            .ToList();
+
+        // Dependency injection setup
+        IServiceCollection services = new ServiceCollection();
+        services.AddDbContext<YourDbContext>(); // Replace YourDbContext with your actual DbContext
+        IServiceProvider serviceProvider = services.BuildServiceProvider();
+
+        // Shared DbContext
+        var sharedDbContext = serviceProvider.GetRequiredService<YourDbContext>(); // Replace YourDbContext
+
+        // Parallel processing
+        Parallel.ForEach(batches, batch =>
+        {
+            foreach (int id in batch)
+            {
+                if (!CheckIfIdExistsInDatabase(sharedDbContext, id))
+                {
+                    idsToAddToNewCollection.Enqueue(id);
+                }
+            }
+        });
+
+        // Now, idsToAddToNewCollection contains IDs not found in the database
+        Console.WriteLine("IDs not found in the database:");
+        foreach (int id in idsToAddToNewCollection)
+        {
+            Console.WriteLine(id);
+        }
+    }
+
+    static bool CheckIfIdExistsInDatabase(YourDbContext dbContext, int id)
+    {
+        lock (dbContextLock)
+        {
+            // Replace this with your actual logic to check if the ID exists in the database
+            // Return true if it exists, false otherwise
+            // Example: return dbContext.YourTable.Any(x => x.Id == id);
+            return false;
+        }
+    }
+
+    static List<int> GetListOfIds()
+    {
+        // Replace this with your actual list of IDs
+        return Enumerable.Range(1, 100).ToList();
+    }
+}
