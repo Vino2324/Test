@@ -1,4 +1,157 @@
- string connectionString = "YourConnectionString";
+CREATE PROCEDURE InsertSWPAutoFeedResults
+    @SWPAutoFeedResults dbo.SWPAutoFeedResultsType READONLY
+AS
+BEGIN
+    BEGIN TRY
+        -- Start a transaction
+        BEGIN TRANSACTION;
+
+        -- Create a staging table
+        CREATE TABLE #StagingTable
+        (
+            Sequenceld BIGINT,
+            CurrencyId NVARCHAR(255),
+            ExternalRef NVARCHAR(255),
+            WireType NVARCHAR(255),
+            Par NVARCHAR(255),
+            DDA NVARCHAR(255),
+            FedRef NVARCHAR(255),
+            OmadImad NVARCHAR(255),
+            MOPType NVARCHAR(255),
+            WireMethod INT,
+            WireAmount DECIMAL(18, 2),
+            WireDate DATE,
+            Comments NVARCHAR(MAX),
+            CreateDate DATETIME,
+            PrimaryPortfolioFlag TINYINT,
+            CreatedBy NVARCHAR(255),
+            Detailid INT,
+            TrustAcctNumber NVARCHAR(255),
+            DescriptionCodeId INT,
+            TreatmentCodeId INT,
+            DetailWireType NVARCHAR(255),
+            AdditionalNote NVARCHAR(MAX),
+            EntityId INT,
+            IsProcessed BIT
+        );
+
+        -- Iterate through each distinct Sequenceld
+        DECLARE @CurrentSequenceld BIGINT;
+        DECLARE SequenceldCursor CURSOR LOCAL FOR SELECT DISTINCT Sequenceld FROM @SWPAutoFeedResults;
+        
+        OPEN SequenceldCursor;
+        
+        FETCH NEXT FROM SequenceldCursor INTO @CurrentSequenceld;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            -- Clear the staging table for each group
+            TRUNCATE TABLE #StagingTable;
+
+            -- Insert into the staging table for the current group
+            INSERT INTO #StagingTable (Sequenceld, CurrencyId, ExternalRef, WireType, Par, DDA, FedRef, OmadImad, MOPType, WireMethod, WireAmount, WireDate, Comments, CreateDate, PrimaryPortfolioFlag, CreatedBy, Detailid, TrustAcctNumber, DescriptionCodeId, TreatmentCodeId, DetailWireType, AdditionalNote, EntityId, IsProcessed)
+            SELECT 
+                Sequenceld,
+                CurrencyId,
+                ExternalRef,
+                WireType,
+                Par,
+                DDA,
+                FedRef,
+                OmadImad,
+                MOPType,
+                WireMethod,
+                WireAmount,
+                WireDate,
+                Comments,
+                CreateDate,
+                PrimaryPortfolioFlag,
+                CreatedBy,
+                Detailid,
+                TrustAcctNumber,
+                DescriptionCodeId,
+                TreatmentCodeId,
+                DetailWireType,
+                AdditionalNote,
+                EntityId,
+                IsProcessed
+            FROM @SWPAutoFeedResults
+            WHERE Sequenceld = @CurrentSequenceld;
+
+            -- Process the current group and insert one record at a time
+            DECLARE @RowIndex INT = 1;
+            DECLARE @TotalRows INT = (SELECT COUNT(*) FROM #StagingTable);
+
+            WHILE @RowIndex <= @TotalRows
+            BEGIN
+                -- Insert into MatchedTable
+                INSERT INTO MatchedTable (Sequenceld, CurrencyId, ExternalRef, WireType, Par, DDA, FedRef, OmadImad, MOPType, WireMethod, WireAmount, WireDate, Comments, CreateDate, PrimaryPortfolioFlag, CreatedBy)
+                SELECT 
+                    Sequenceld,
+                    CurrencyId,
+                    ExternalRef,
+                    WireType,
+                    Par,
+                    DDA,
+                    FedRef,
+                    OmadImad,
+                    MOPType,
+                    WireMethod,
+                    WireAmount,
+                    WireDate,
+                    Comments,
+                    CreateDate,
+                    PrimaryPortfolioFlag,
+                    CreatedBy
+                FROM #StagingTable
+                WHERE Sequenceld = @CurrentSequenceld AND ROW_NUMBER() = @RowIndex;
+
+                -- Insert into MatchDetailTable
+                INSERT INTO MatchDetailTable (Sequenceld, Detailid, TrustAcctNumber, DescriptionCodeId, TreatmentCodeId, DetailWireType, AdditionalNote, EntityId, IsProcessed)
+                SELECT 
+                    Sequenceld,
+                    Detailid,
+                    TrustAcctNumber,
+                    DescriptionCodeId,
+                    TreatmentCodeId,
+                    DetailWireType,
+                    AdditionalNote,
+                    EntityId,
+                    IsProcessed
+                FROM #StagingTable
+                WHERE Sequenceld = @CurrentSequenceld AND ROW_NUMBER() = @RowIndex;
+
+                SET @RowIndex = @RowIndex + 1;
+            END
+
+            FETCH NEXT FROM SequenceldCursor INTO @CurrentSequenceld;
+        END
+
+        CLOSE SequenceldCursor;
+        DEALLOCATE SequenceldCursor;
+
+        -- Drop the staging table
+        DROP TABLE #StagingTable;
+
+        -- Commit the transaction
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        -- Rollback the transaction on failure
+        ROLLBACK;
+        -- You can log the error or re-throw it if needed
+        THROW;
+    END CATCH;
+END;
+
+
+
+-------------------------------------------------------------
+
+
+
+
+string connectionString = "YourConnectionString";
 
         // Using Dapper to execute the stored procedure
         using (SqlConnection connection = new SqlConnection(connectionString))
