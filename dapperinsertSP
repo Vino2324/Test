@@ -1,3 +1,65 @@
+CREATE PROCEDURE ProcessRecords
+AS
+BEGIN
+    BEGIN TRY
+        -- Declare a table variable to store records
+        DECLARE @RecordsTable TABLE (
+            ID INT,
+            Name NVARCHAR(50)
+            -- Add other columns as needed
+        );
+
+        -- Insert sample data into the table variable
+        INSERT INTO @RecordsTable (ID, Name) VALUES
+        (1, 'Record1'),
+        (2, 'Record2'),
+        (3, 'Record3');
+
+        -- Loop through the table variable
+        DECLARE @ID INT, @Name NVARCHAR(50);
+
+        WHILE EXISTS (SELECT 1 FROM @RecordsTable)
+        BEGIN
+            -- Get the first record from the table variable
+            SELECT TOP 1 @ID = ID, @Name = Name FROM @RecordsTable;
+
+            -- Try to insert each record
+            BEGIN TRY
+                -- Start a new transaction for each record
+                BEGIN TRANSACTION;
+
+                INSERT INTO YourTargetTable (ID, Name) -- Replace YourTargetTable with your actual table name
+                VALUES (@ID, @Name);
+
+                -- Commit the transaction for the current record
+                COMMIT TRANSACTION;
+
+                -- Remove the processed record from the table variable
+                DELETE FROM @RecordsTable WHERE ID = @ID;
+            END TRY
+            BEGIN CATCH
+                -- Handle the error, log it, etc.
+                PRINT 'Error occurred for record ID: ' + CONVERT(NVARCHAR(10), @ID) + '. Error Message: ' + ERROR_MESSAGE();
+
+                -- Rollback the transaction for the current record
+                IF @@TRANCOUNT > 0
+                    ROLLBACK TRANSACTION;
+                
+                -- Remove the record from the table variable to proceed with the next one
+                DELETE FROM @RecordsTable WHERE ID = @ID;
+            END CATCH
+        END;
+    END TRY
+    BEGIN CATCH
+        -- Handle any other errors that might occur during the transaction
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+    END CATCH;
+END;
+
+
+----------------------------------------------------------------------------------------
+
 CREATE PROCEDURE InsertSWPAutoFeedResults
     @SWPAutoFeedResults dbo.SWPAutoFeedResultsType READONLY
 AS
