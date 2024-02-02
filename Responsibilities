@@ -1,3 +1,48 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class YourRepository
+{
+    private readonly YourDbContext _context;
+
+    public YourRepository(YourDbContext context)
+    {
+        _context = context;
+    }
+
+    public List<YourOutputModel> GetAllOutputModels()
+    {
+        var results = _context.LoanNoticeActivityTypes
+            .Join(_context.LoanNoticeActivityTags, at => at.ActivityTypeId, lt => lt.ActivityTypeId, (at, lt) => new { at, lt })
+            .Join(_context.LoanNoticeTags, j => j.lt.TagId, tag => tag.TagId, (j, tag) => new { j.at, j.lt, tag })
+            .GroupBy(x => new { x.at.ActivityTypeId, x.at.ActivityTypeName })
+            .AsEnumerable()
+            .Select(g => new YourOutputModel
+            {
+                ActivityTypeId = g.Key.ActivityTypeId,
+                ActivityTypeName = g.Key.ActivityTypeName,
+                Tags = g.Select(x => new TagModel
+                {
+                    TagId = x.tag.TagId,
+                    TagName = x.tag.TagName,
+                    IsActive = x.lt.IsActive,
+                    IsRequired = x.lt.IsRequired
+                }).ToList()
+            })
+            .ToList();
+
+        return results;
+    }
+}
+
+
+
+
+
+-----------------------------------------------------
+
+
 public List<YourOutputModel> GetAllOutputModels()
     {
         var results = (from at in _context.LoanNoticeActivityTypes
