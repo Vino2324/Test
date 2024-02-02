@@ -1,3 +1,39 @@
+public List<YourOutputModel> GetAllOutputModels()
+    {
+        var results = (from at in _context.LoanNoticeActivityTypes
+                       join lt in _context.LoanNoticeActivityTags on at.ActivityTypeId equals lt.ActivityTypeId
+                       join tag in _context.LoanNoticeTags on lt.TagId equals tag.TagId
+                       select new YourOutputModel
+                       {
+                           ActivityTypeId = at.ActivityTypeId,
+                           ActivityTypeName = at.ActivityTypeName,
+                           Tags = new List<TagModel>
+                           {
+                               new TagModel
+                               {
+                                   TagId = tag.TagId,
+                                   TagName = tag.TagName,
+                                   IsActive = lt.IsActive,
+                                   IsRequired = lt.IsRequired
+                               }
+                           }
+                       })
+                      .GroupBy(x => new { x.ActivityTypeId, x.ActivityTypeName })
+                      .Select(g => new YourOutputModel
+                      {
+                          ActivityTypeId = g.Key.ActivityTypeId,
+                          ActivityTypeName = g.Key.ActivityTypeName,
+                          Tags = g.SelectMany(x => x.Tags).ToList()
+                      })
+                      .ToList();
+
+        return results;
+    }
+
+
+
+----------------------------------------------------
+
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
