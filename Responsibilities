@@ -1,139 +1,35 @@
-April 12, 2021
-211 Quality Circle
-College Station, TX 77845
-TollFree
-(855) 7894268
-Phone (979) 6917700
-Fax (979) 6917750
-www.Cognizant.com
-Re: Vinoth Velmurugan(273951)
-TO WHOMEVER IT MAY CONCERN
-This letter is to confirm the direct employment of Mr. Vinoth Velmurugan (273951) with the
-Cognizant family of companies worldwide, on a full time (3540
-hours per week) basis.
-Internal Band Level Start Date End Date Location
-Programmer Analyst Trainee February 14, 2011 February 13, 2012 India
-Programmer Analyst February 14, 2012 October 31, 2013 India
-Associate Projects
-November 01, 2013 January 31, 2016 India
-Associate Projects
-February 01, 2016 June 30, 2018 United States
-Sr. Associate Projects
-July 01, 2018 April 12, 2021 United States
-At Cognizant, we employ an internal band level with an official grade description as specified in this
-letter; however, Cognizant Business Units have mapped this official grade description to that of
-functional job titles. Therefore, in addition to the band level/ grade description provided in this letter,
-the employee will have had an official functional job title which is not captured in this letter.
-As Programmer Analyst Trainee, Mr. Vinoth Velmurugan was responsible for developing web and
-windows applications for natural gas and power scheduling systems using C#.NET, JavaScript,
-ADO.Net, AJAX and SQL Server 2008 and ensure coding standards are met. He analyzed the
-business functional requirement and ensure the requirements are successfully addressed, develop
-unit test cases, coordinate with onsite team on technical specifications, requirement gaps and
-complete the assigned user stories on time.
-As Programmer Analyst, Mr. Vinoth Velmurugan was responsible for overseeing development and
-ensure design meets requirement, create unit test case scenarios and ensure the successful
-implementation of the requirements as expected by business, Coordinate with various teams involved
-in the project and ensure project deadlines are met, use knowledge of platforms, frameworks,
-methods, products to achieve business and systems solutions. He has gone through several training
-programs and completed technical certification to strengthen his technical skills in Windows Forms,
-Windows Presentation Foundation, ASP.Net 4.0, JavaScript, ADO.Net, AJAX and SQL server 2008.
-Holds Microsoft certified technology specialist certification for developing web applications.
-As Associate Projects,
-Mr. Vinoth Velmurugan was responsible for developing page prototypes,
-wireframes for web forms, single page applications and restful services applications using MVC 4.0,
-C#.NET, Angular JS, WCF, WEB API, SQL Server, AJAX, JavaScript, LINQ and Entity Framework.
-Identify and mitigate any technical gaps and or risks.
-Page 1 of 2
-As Associate Projects,
-Mr. Vinoth Velmurugan was also responsible for addressing issue related to
-application integration and compatibility. Design physical database schema, data modelling,
-performance monitoring and SQL tuning with best practices and recommendations. Supports quality
-assurance and User acceptance testing. He was involved in peer reviews on Design, Code and Unit
-Test cases for ensuring the quality deliverables to the customer. He has conducted several technical
-sessions to his team members on various technical topics which are latest in the field.
-As Sr. Associate Projects,
-Mr. Vinoth Velmurugan was responsible for designing and developing
-functional modules for customer applications using latest cuttingedge
-technologies like .NET5, .NET
-CORE, Docker, Elastic Search, Kibana, Entity framework core, MVC 5, Angular 8, SQL server 2016.
-Automate regular deployment process using Jenkins and other pipeline tools proven in the industry.
-He migrates archive data from on premise to cloud solutions like S3 buckets and Azure blob storage.
-Hosted .NET core API services in cloud and onpremise
-infrastructure. He developed centralized
-logging for multiple API services, web apps and create indexes, widgets to track application logs in
-Elastic Search & Kibana. He followed Agile methodologies for the project execution strategy. Ensure
-to adopt proven design patterns like dependency injection, repository, MVC, MVVM, singleton in
-development projects. He worked alongside with customers, business analysts and other
-development teams to develop and integrate complex application modules. He was also responsible
-to execute projects by adopting various phases in software development life cycle (SDLC) like
-requirement gathering, analysis, design, development, unit testing, integration testing, deployment and
-application support.
-Mr. Vinoth Velmurugan gained experience in the following:
-Web Skills: Asp.Net Core, .NET 5, ASP.Net 3.5/4.5, IIS 5.0/6.0/7.0, JavaScript, jQuery, XML,
-HTML 5, Razor Engine (CSHTML), Bootstrap, CSS, AJAX, Angular 48
-and Web API Core
-Data Access Skills: ADO.Net, ODBC, OLEDB, Entity Framework Core, Dapper
-Methodologies: Agile, Waterfall and Iterative
-Tools: Visual Studio 20082019,
-VS Code
-Languages: C#, VB.Net, HTML, SQL
-Architecture: NTier,
-MVVM and MVC 4/5
-Distributed Technologies: Web Services, WCF, Rest API and Web API
-Relational Databases: SQL Server 2005/2008/2012/2016, Oracle 9i/10g/11i
-3rd Party Tools: DevExpress and Telerik
-Version Control Tools: Visual Source Safe, Team Foundation Server and Git
-Cloud Computing: Amazon Web Services (AWS) and Azure Functions, AWS S3 storage, AWS
-API gateway, AWS Lambda, AWS EC2, Athena, Microsoft Azure Storage, Azure Boards, Azure
-Repositories, Azure Pipelines, Jenkins, Azure SQL, Docker, Rabbit MQ, Service Bus
-Testing Tools: NUnit
-Sincerely,
-For Cognizant Technology Solutions U.S. Corporation
-Dravina R. Reddy
-Senior Representative Human
-Resources
-April 12, 2021
-Page 2 of 2
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
+public class YourRepository
+{
+    private readonly YourDbContext _context;
 
--------------------------------------------
+    public YourRepository(YourDbContext context)
+    {
+        _context = context;
+    }
 
-NInfo Systems INC
-4105 US Route 1 , Suite 14 , Monmouth Junction , NJ 08852
-Phone: 248.274.3100, Email: hr@ninfosystemsinc.com, Website: www.ninfosysteminc.com
+    public YourOutputModel GetOutputModel(int activityTypeId)
+    {
+        var result = _context.LoanNoticeActivityTypes
+            .Where(l => l.ActivityTypeId == activityTypeId)
+            .Include(l => l.LoanNoticeActivityTags)
+                .ThenInclude(lt => lt.Tag)
+            .Select(l => new YourOutputModel
+            {
+                ActivityTypeId = l.ActivityTypeId,
+                ActivityTypeName = l.ActivityTypeName,
+                Tags = l.LoanNoticeActivityTags.Select(lt => new TagModel
+                {
+                    TagId = lt.Tag.TagId,
+                    TagName = lt.Tag.TagName,
+                    IsActive = lt.IsActive,
+                    IsRequired = lt.IsRequired
+                }).ToList()
+            })
+            .FirstOrDefault();
 
-
-Senior .NET Developer 13th April 2021 27th September 2022 United States
-As a Senior .NET Developer, Mr. Vinoth Velmurugan was responsible for delivering new and complex highquality
-solutions to the clients in response to varying business requirements. Work closely with business
-analysts, subject matter experts and development teams in design, development, testing, implementation,
-and support of application projects. Design and develop new technology solutions, primarily in the .Net Core
-and .NET framework, React JS that fulfill business requirements. Develop and integrate complex application
-modules using .Net Core, .NET 6/5, ASP.NET, C#, n-Tier architecture and application development tools
-such as Microsoft Visual Studio 2022/2019 and SQL Server Management Studio. Implement web-based
-user interfaces in .NET core, .Net Framework using MVC5 architectural patterns, HTML5, CSS, JavaScript,
-Angular, React JS. Perform/manage relational database design, normalization, T-SQL/stored procedures
-with SQL Server 2016 – 2022. Build secure web applications with user authentication and role-based
-access control. Integrate mapping APIs and web services to build interactive map-based
-applications. Participate in the software testing process, including identification and resolution of defects.
-Contribute to and support roll-out strategies. Participate in and contribute to formal/informal technical
-reviews and presentations. Understand high level application architecture/design, network design,
-performance constraints and security frameworks.
-Mr. Vinoth Velmurugan gained experience in the following:
-Web Skills: Asp.Net Core, .NET 6/5, React JS, JavaScript, jQuery, XML, HTML 5, Bootstrap, CSS, AJAX,
-and Web API Core
-Data Access Skills: ADO.Net, ODBC, Entity Framework Core, Dapper
-Methodologies: Agile, Waterfall and Iterative
-Tools: Visual Studio 20082022, VS Code
-Languages: C#, Typescript, SQL
-Architecture: NTier, MVC, MVVM
-Distributed Technologies: Web Services, WCF, Rest API and Web API
-Relational Databases: SQL Server 2016-2022
-3rd Party Tools: Dynatrace, Splunk
-Version Control Tools: Git
-Cloud Computing: Amazon Web Services (AWS) and Azure Functions, AWS S3 storage, AWS
-API gateway, AWS Lambda, AWS EC2, Athena, Microsoft Azure Storage, Azure Boards, Azure
-Repositories, Azure Pipelines, Jenkins, Azure SQL, Docker, Rabbit MQ, Service Bus
-Testing Tools: NUnit
-
-
+        return result;
+    }
+}
