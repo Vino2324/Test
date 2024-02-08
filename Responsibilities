@@ -1,4 +1,62 @@
 using System;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+
+public class KeycloakHelper
+{
+    private readonly string _server;
+    private readonly string _realm;
+    private readonly string _clientId;
+    private readonly string _clientSecret;
+
+    public KeycloakHelper(string server, string realm, string clientId, string clientSecret)
+    {
+        _server = server;
+        _realm = realm;
+        _clientId = clientId;
+        _clientSecret = clientSecret;
+    }
+
+    public async Task<string> GetAccessTokenAsync()
+    {
+        var url = $"{_server}/auth/realms/{_realm}/protocol/openid-connect/token";
+        var data = $"grant_type=client_credentials&client_id={_clientId}&client_secret={_clientSecret}";
+
+        using (var client = new HttpClient())
+        {
+            var content = new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded");
+            var response = await client.PostAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                // Assuming response is JSON
+                var token = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(responseContent).access_token;
+                return token;
+            }
+            else
+            {
+                throw new Exception($"Failed to get access token. Status code: {response.StatusCode}");
+            }
+        }
+    }
+}
+
+// Usage:
+// Instantiate KeycloakHelper with appropriate parameters
+var keycloakHelper = new KeycloakHelper(server, realm, clientId, clientSecret);
+// Call GetAccessTokenAsync method to get the access token
+var accessToken = await keycloakHelper.GetAccessTokenAsync();
+Console.WriteLine("Access Token: " + accessToken);
+
+
+
+
+
+-------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
