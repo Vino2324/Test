@@ -1,4 +1,31 @@
+
+
+IF (
+    (SELECT 
+        COUNT(1)
+    FROM (
+        SELECT 
+            SUM(CASE WHEN BC.ContractId = SC.ContractId THEN 1 ELSE 0 END) AS ContractCount,
+            SUM(CASE WHEN BC.ContractId = SC.ParentContract THEN 1 ELSE 0 END) AS ParentContractCount
+        FROM [dbo].[BIZ_ConsultantReps] AS BC WITH (NOLOCK)
+        INNER JOIN #SaleforceContracts AS SC 
+        ON BC.ContractId = SC.ContractId OR BC.ContractId = SC.ParentContract
+    ) AS SubQuery
+    WHERE ContractCount = 0 AND ParentContractCount > 0
+    ) > 0
+)
+BEGIN
+    -- Your code here
+END
+
+
+
+
+
 using System;
+
+
+
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
