@@ -1,5 +1,142 @@
 
-  SELECT id as t1id, 
+import sys
+import boto3
+import psycopg2
+from datetime import datetime
+from awsglue.context import GlueContext
+from awsglue.transforms import ApplyMapping
+from pyspark.context import SparkContext
+from awsglue.job import Job
+from awsglue.utils import getResolvedOptions
+
+# Get job parameters
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+# Initialize Spark and Glue contexts
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+# AWS Clients
+s3_client = boto3.client('s3')
+logs_client = boto3.client('logs')
+log_group = "/aws-glue/products-job"
+
+def log_to_cloudwatch(message):
+    logs_client.put_log_events(
+        logGroupName=log_group,
+        logStreamName="execution-log",
+        logEvents=[{"timestamp": int(datetime.utcnow().timestamp() * 1000), "message": message}]
+    )
+
+log_to_cloudwatch("Starting Glue Job for Multi-Table ETL")
+
+# Read Large Source Tables from S3
+table1 = glueContext.create_dynamic_frame.from_options(
+    connection_type="s3",
+    connection_options={"paths": ["s3://your-bucket/source_table1/"]},
+    format="parquet"
+)
+
+table2 = glueContext.create_dynamic_frame.from_options(
+    connection_type="s3",
+    connection_options={"paths": ["s3://your-bucket/source_table2/"]},
+    format="parquet"
+)
+
+table3 = glueContext.create_dynamic_frame.from_options(
+    connection_type="s3",
+    connection_options={"paths": ["s3://your-bucket/source_table3/"]},
+    format="parquet"
+)
+
+# Convert DynamicFrames to DataFrames for complex transformations
+df1 = table1.toDF()
+df2 = table2.toDF()
+df3 = table3.toDF()
+
+# Optimize Joins by selecting only required columns
+df1 = df1.select("id", "name", "category_id")
+df2 = df2.select("category_id", "category_name")
+df3 = df3.select("id", "price", "stock_quantity")
+
+# Use Spark to Join Data Efficiently
+final_df = df1.join(df2, "category_id", "left") \
+              .join(df3, "id", "inner") \
+              .withColumn("created_at", spark.sql.functions.current_timestamp()) \
+              .withColumn("modified_at", spark.sql.functions.current_timestamp())
+
+# Write Transformed Data to S3 in Partitioned CSV Format
+output_path = "s3://your-bucket/temp/products_data/"
+final_df.write \
+    .format("csv") \
+    .option("header", "true") \
+    .option("compression", "gzip") \
+    .mode("overwrite") \
+    .save(output_path)
+
+log_to_cloudwatch(f"Transformed data saved to {output_path}")
+
+# PostgreSQL Connection
+pg_connection = {
+    "host": "your-db-host",
+    "database": "your-db-name",
+    "user": "your-username",
+    "password": "your-password",
+    "port": "5432"
+}
+
+try:
+    conn = psycopg2.connect(**pg_connection)
+    cursor = conn.cursor()
+
+    # Truncate table before inserting new data
+    cursor.execute("TRUNCATE TABLE products RESTART IDENTITY;")
+    conn.commit()
+    log_to_cloudwatch("Truncated existing Products data")
+
+    # Load Multiple CSV Files Using COPY FROM
+    cursor.execute(f"""
+        DO $$ 
+        DECLARE
+            file TEXT;
+        BEGIN
+            FOR file IN
+                SELECT pg_ls_dir('s3://your-bucket/temp/products_data/')
+            LOOP
+                EXECUTE format(
+                    'COPY products(id, name, category, price, stock_quantity, created_at, modified_at) 
+                     FROM ''s3://your-bucket/temp/products_data/%s'' 
+                     IAM_ROLE ''your-aws-glue-iam-role'' 
+                     FORMAT CSV HEADER;',
+                     file
+                );
+            END LOOP;
+        END $$;
+    """)
+
+    conn.commit()
+    log_to_cloudwatch("Successfully loaded new Products data into PostgreSQL using COPY FROM")
+
+except Exception as e:
+    log_to_cloudwatch(f"Error loading data: {str(e)}")
+
+finally:
+    cursor.close()
+    conn.close()
+
+job.commit()
+log_to_cloudwatch("Glue Job Completed Successfully")
+
+
+
+
+
+
+
+SELECT id as t1id, 
          column_name as t1_column_name, 
          'table1' AS t1_source_table, 
          column_value AS value1
