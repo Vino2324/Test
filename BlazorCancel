@@ -1,3 +1,28 @@
+yum update -y
+yum install -y python3 pip zip
+pip3 install --only-binary :all: psycopg2-binary boto3 pandas pyarrow -t /tmp/dependencies
+cd /tmp/dependencies
+zip -r /tmp/glue_dependencies.zip .
+
+
+
+docker cp $(docker ps -lq):/tmp/glue_dependencies.zip ./
+
+
+
+----------
+
+
+
+
+
+
+
+
+
+
+
+
 <button class="btn btn-primary" @onclick="SaveChanges">Save</button>
 <button class="btn btn-secondary" @onclick="ShowCancelConfirmation">Cancel</button>
 
