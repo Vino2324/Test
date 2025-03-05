@@ -1,3 +1,29 @@
+import sys
+import subprocess
+
+print(sys.version)  # Check Python version
+print(sys.path)     # Verify module paths
+
+# Attempt to import awswrangler, install if missing
+try:
+    import awswrangler as wr
+    print(f"AWS Wrangler version: {wr.__version__}")
+except ModuleNotFoundError:
+    print("awswrangler not found. Installing...")
+    
+    subprocess.run([sys.executable, "-m", "pip", "install", "awswrangler"], check=True)
+    
+    # Retry import after installation
+    import awswrangler as wr
+    print(f"AWS Wrangler installed. Version: {wr.__version__}")
+
+# ✅ Now use awswrangler for Glue Job logic
+print("AWS Wrangler is ready to use!")
+
+
+
+
+
 yum update -y
 yum install -y python3 pip zip
 pip3 install --only-binary :all: psycopg2-binary boto3 pandas pyarrow -t /tmp/dependencies
